@@ -6,20 +6,25 @@ import Expensio2 from "../assets/Expensio2.jpg";
 import Expensio3 from "../assets/Expensio3.jpg";
 import Expensio4 from "../assets/Expensio4.jpg";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
+import { createUserWithEmailAndPassword,updateProfile } from "firebase/auth";
+import { auth, db } from "../config/firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    displayName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -27,10 +32,28 @@ const SignUp = () => {
       return;
     }
 
-    // TODO: Add your signup logic here (Firebase, API, etc.)
-    console.log("User registered:", formData);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
 
-    navigate("/login");
+      await updateProfile(userCredential.user, {
+        displayName : formData.displayName
+      })
+
+      const docRef = doc(db, "users", userCredential.user.uid);
+
+      await setDoc(docRef, {
+        email: formData.email,
+        displayName: formData.displayName,
+        uid: userCredential.user.uid,
+        createdAt: new Date()
+      })
+
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error signing up:", error);
+      alert("Error signing up. Please try again.");
+    }
+    
   };
 
   return (
@@ -50,11 +73,21 @@ const SignUp = () => {
 
         </div>
 
-      <div className=" bg-black/10 p-8 rounded-2xl shadow-lg w-106 backdrop-blur-sm">
+      <div className=" bg-black/10 p-8 rounded-2xl shadow-lg w-96 backdrop-blur-sm">
 
       
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+  type="text"
+  name="displayName"
+  placeholder="Enter name"
+  value={formData.displayName || ""}
+  onChange={handleChange}
+  required
+  className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+          />
+
           <input
             type="email"
             name="email"

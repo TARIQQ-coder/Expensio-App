@@ -6,6 +6,8 @@ import Expensio2 from "../assets/Expensio2.jpg";
 import Expensio3 from "../assets/Expensio3.jpg";
 import Expensio4 from "../assets/Expensio4.jpg";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import {auth} from "../config/firebaseConfig"; 
 
 const LogIn = () => {
   const navigate = useNavigate();
@@ -14,22 +16,26 @@ const LogIn = () => {
     password: "",
   });
 
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // TODO: Add your login logic here (Firebase, API, etc.)
-    console.log("User logged in:", formData);
-
-    navigate("/expense-tracker"); // redirect after login
+    try {
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error logging in:", error);
+    }
+ 
   };
 
   return (
     <div
-      className="flex justify-center items-center h-screen bg-black bg-cover bg-center"
+      className="flex justify-center items-center h-screen bg-black bg-cover bg-center "
       style={{ backgroundImage: `url(${Expensio2})` }}
     >
       <div>
@@ -42,7 +48,7 @@ const LogIn = () => {
         </div>
 
         {/* Login Form */}
-        <div className="bg-black/10 p-8 rounded-2xl shadow-lg w-106 backdrop-blur-sm">
+        <div className="bg-black/10 p-8 rounded-2xl shadow-lg w-96 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="email"
