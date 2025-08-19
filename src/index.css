@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+.custom-toast-container {
+  top: 80px !important; /* Tailwind utility -> margin-top: 4rem */
+}

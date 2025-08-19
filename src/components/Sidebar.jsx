@@ -11,22 +11,19 @@ import {
 } from "react-icons/fa";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
 
-const Sidebar = ({user}) => {
+const Sidebar = ({ user }) => {
   return (
     <div className="flex flex-col h-screen w-64 bg-black text-gray-300 py-2 px-6 justify-between">
       
       {/* Top Section - Profile */}
       <div>
         <div className="flex flex-col items-center mb-10">
-          <img
-            src={user?.profilePicture || "https://i.pravatar.cc/100"}
-            alt="profile"
-            className="w-20 h-20 rounded-full mb-3"
-          />
-          <h2 className="text-white font-medium">{user?.displayName || user?.name || "Guest"}</h2>
-          <p className="text-sm text-gray-400 truncate max-w-[180px]">
-  {user?.email || "No email"}
-</p>
+          <h2 className="text-white font-medium text-2xl uppercase tracking-wide">
+            {user?.displayName || user?.name || "Guest"}
+          </h2>
+          <p className=" text-gray-400 truncate max-w-[180px] text-center">
+            {user?.email || "No email"}
+          </p>
         </div>
 
         {/* Navigation */}
@@ -45,7 +42,7 @@ const Sidebar = ({user}) => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-2 rounded-lg transition ${
                   isActive
-                    ? "bg-gray-800 text-teal-400 shadow-[0_0_10px_#14b8a6]"
+                    ? "bg-white/15 text-teal-400 border border-[0_0_10px_#14b8a6] "
                     : "hover:bg-gray-900"
                 }`
               }

@@ -7,7 +7,9 @@ import Expensio3 from "../assets/Expensio3.jpg";
 import Expensio4 from "../assets/Expensio4.jpg";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import {auth} from "../config/firebaseConfig"; 
+import { auth } from "../config/firebaseConfig";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const LogIn = () => {
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ const LogIn = () => {
     email: "",
     password: "",
   });
-
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,14 +25,33 @@ const LogIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       await signInWithEmailAndPassword(auth, formData.email, formData.password);
       navigate("/dashboard");
     } catch (error) {
       console.error("Error logging in:", error);
+      let message = "Something went wrong. Please try again.";
+
+      if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
+    message = "Invalid email or password. Please try again!";
+  } else if (error.code === "auth/too-many-requests") {
+    message = "Too many failed attempts. Please wait a while before trying again.";
+  } else if (error.code === "auth/network-request-failed") {
+    message = "Network error. Please check your internet connection.";
+  }
+
+      toast.error(message, {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        toastClassName: "custom-toast",
+      });
     }
- 
   };
 
   return (
@@ -43,7 +64,8 @@ const LogIn = () => {
         <div>
           <TbArrowsTransferUpDown className="text-5xl text-teal-400 mx-auto rotate-90" />
           <h1 className="text-5xl font-bold text-center mb-8 bg-gradient-to-r from-teal-50 via-teal-400 to-teal-900 bg-clip-text text-transparent tracking-wide">
-            EXP<span className="text-7xl">e</span><span className="text-7xl">n</span>SIO
+            EXP<span className="text-7xl">e</span>
+            <span className="text-7xl">n</span>SIO
           </h1>
         </div>
 
@@ -79,7 +101,7 @@ const LogIn = () => {
           </form>
 
           {/* Link to SignUp */}
-          <p className="text-gray-300  text-center mt-4">
+          <p className="text-gray-300 text-center mt-4">
             Don't have an account?{" "}
             <Link to="/signup" className="text-teal-400 hover:underline">
               Sign Up
@@ -87,6 +109,18 @@ const LogIn = () => {
           </p>
         </div>
       </div>
+
+      {/* Toast Notification Container */}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        toastClassName="bg-gray-900 text-white font-medium rounded-lg shadow-lg"
+        className="custom-toast-container"
+      />
     </div>
   );
 };
