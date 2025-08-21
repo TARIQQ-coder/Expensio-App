@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import SignUp from './components/SignUp';
 import LogIn from './components/LogIn';
 import DashboardLayout from './components/DashboardLayout';
+import Home from './components/Home'; // Assuming you have a Home component for the dashboard home page
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Route path="/login" element={<LogIn />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           {/* Nested routes for dashboard */}
+          <Route index element={<Home />} />
           <Route path="expenses" element={<div>Expenses Page</div>} />
           <Route path="trips" element={<div>Trips Page</div>} />
           <Route path="approvals" element={<div>Approvals Page</div>} />
