@@ -1,16 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaWallet } from "react-icons/fa";
-import { MdFlight } from "react-icons/md";
-import { MdOutlineShoppingCartCheckout } from "react-icons/md";
+import { MdFlight, MdOutlineShoppingCartCheckout } from "react-icons/md";
 import { IoMdTime } from "react-icons/io";
 import { RiExchangeDollarFill } from "react-icons/ri";
-
-import { expenses } from "../data/expenses.js";
-
-
+import { formatCurrency } from "../utils/formatCurrency";
+import useExpensesStore from "../store/useExpensesStore"; 
+import { auth } from "../config/firebaseConfig";
 
 const Home = () => {
-  
+  const { expenses, fetchExpenses } = useExpensesStore();
+
+  useEffect(() => {
+    // When a user is logged in, fetch their expenses
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        console.log("Your UID:", user.uid);
+        fetchExpenses(user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [fetchExpenses]);
 
   return (
     <div className="lg:pl-70 pt-10">
@@ -54,8 +63,8 @@ const Home = () => {
           <h2 className="text-xl font-semibold mb-2 border-b-2 pl-4 border-white/30 pb-1">
             Recent Expenses
           </h2>
-          <div className=" overflow-x-auto">
-            <table className="w-full ">
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
                 <tr>
                   <th className="p-2 text-left">Subject</th>
@@ -65,8 +74,8 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((expense, index) => (
-                  <tr key={index} className="">
+                {expenses.map((expense) => (
+                  <tr key={expense.id}>
                     <td className="p-2">{expense.subject}</td>
                     <td className="p-2">{expense.employee}</td>
                     <td className="p-2">
@@ -86,9 +95,16 @@ const Home = () => {
                         {expense.team}
                       </span>
                     </td>
-                    <td className="p-2">{expense.amount}</td>
+                    <td className="p-2">{formatCurrency(expense.amount)}</td>
                   </tr>
                 ))}
+                {expenses.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="p-2 text-center text-gray-400">
+                      No expenses yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

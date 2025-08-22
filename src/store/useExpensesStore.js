@@ -1,38 +1,42 @@
 // src/store/useExpensesStore.js
 import { create } from "zustand";
 import { db } from "../config/firebaseConfig";
-import { collection, addDoc, getDocs, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  where
+} from "firebase/firestore";
 
-const expensesCollectionRef = collection(db, "expenses");
-
-const useExpensesStore = create((set) => ({
+const useExpensesStore = create((set, get) => ({
   expenses: [],
 
-  // Fetch once
-  fetchExpenses: async () => {
-    try {
-      const data = await getDocs(expensesCollectionRef);
-      const expenses = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-      set({ expenses });
-    } catch (err) {
-      console.error("Error fetching expenses:", err);
-    }
-  },
+  fetchExpenses: (userId) => {
+    if (!userId) return;
 
-  // Subscribe realtime
-  subscribeExpenses: () => {
-    return onSnapshot(expensesCollectionRef, (snapshot) => {
-      const expenses = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-      set({ expenses });
+    const q = query(collection(db, "expenses"), where("userId", "==", userId));
+
+    // Listen in real-time
+    onSnapshot(q, (snapshot) => {
+      const expensesData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      set({ expenses: expensesData });
     });
   },
 
-  // Add new expense
-  addExpense: async (expense) => {
+  addExpense: async (expense, userId) => {
+    if (!userId) return;
     try {
-      await addDoc(expensesCollectionRef, expense);
-    } catch (err) {
-      console.error("Error adding expense:", err);
+      await addDoc(collection(db, "expenses"), {
+        ...expense,
+        userId,
+        createdAt: new Date(),
+      });
+    } catch (error) {
+      console.error("Error adding expense:", error);
     }
   },
 }));
