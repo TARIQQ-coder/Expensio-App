@@ -1,44 +1,37 @@
-// src/store/useExpensesStore.js
-import { create } from "zustand";
-import { db } from "../config/firebaseConfig";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  where
-} from "firebase/firestore";
+import useExpensesStore from "../store/useExpensesStore";
+import { useAuth } from "../context/AuthContext"; // or however you get userId
 
-const useExpensesStore = create((set, get) => ({
-  expenses: [],
+const NewExpenseModal = ({ onClose }) => {
+  const addExpense = useExpensesStore((state) => state.addExpense);
+  const { user } = useAuth(); // get the logged in user
 
-  fetchExpenses: (userId) => {
-    if (!userId) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const q = query(collection(db, "expenses"), where("userId", "==", userId));
+    const expense = {
+      title: e.target.title.value,
+      date: e.target.date.value,
+      amount: parseFloat(e.target.amount.value),
+      currency: e.target.currency.value,
+      category: e.target.category.value,
+      notes: e.target.notes.value,
+    };
 
-    // Listen in real-time
-    onSnapshot(q, (snapshot) => {
-      const expensesData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      set({ expenses: expensesData });
-    });
-  },
+    await addExpense(expense, user?.uid); // ✅ save to Firestore
+    onClose(); // close modal after save
+  };
 
-  addExpense: async (expense, userId) => {
-    if (!userId) return;
-    try {
-      await addDoc(collection(db, "expenses"), {
-        ...expense,
-        userId,
-        createdAt: new Date(),
-      });
-    } catch (error) {
-      console.error("Error adding expense:", error);
-    }
-  },
-}));
-
-export default useExpensesStore;
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input name="title" type="text" />
+        <input name="date" type="date" />
+        <input name="amount" type="number" />
+        <select name="currency">...</select>
+        <select name="category">...</select>
+        <textarea name="notes" />
+        <button type="submit">Save Expense</button>
+      </form>
+    </div>
+  );
+};

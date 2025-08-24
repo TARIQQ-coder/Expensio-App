@@ -9,31 +9,23 @@ import {
   doc,
 } from "firebase/firestore";
 
-const useFinanceStore = create((set, get) => ({
+const useFinanceStore = create((set) => ({
   expenses: [],
   income: [],
   budget: null,
 
   // ➕ Add expense
   addExpense: async (uid, expense) => {
-    if (!uid) {
-      console.error("❌ addExpense called without a valid userId!");
-      throw new Error("User ID is required to add an expense");
-    }
-
-    try {
-      const ref = await addDoc(collection(db, "users", uid, "expenses"), {
-        ...expense,
-        createdAt: new Date(),
-      });
-      console.log("✅ Expense added with ID:", ref.id);
-    } catch (err) {
-      console.error("🔥 Error adding expense:", err);
-    }
+    if (!uid) return;
+    await addDoc(collection(db, "users", uid, "expenses"), {
+      ...expense,
+      createdAt: new Date(),
+    });
   },
 
   // ➕ Add income
   addIncome: async (uid, income) => {
+    if (!uid) return;
     await addDoc(collection(db, "users", uid, "income"), {
       ...income,
       createdAt: new Date(),
@@ -42,6 +34,7 @@ const useFinanceStore = create((set, get) => ({
 
   // ➕ Set budget
   setBudget: async (uid, budget) => {
+    if (!uid) return;
     await setDoc(doc(db, "users", uid, "budget", "main"), {
       ...budget,
       createdAt: new Date(),
@@ -52,31 +45,33 @@ const useFinanceStore = create((set, get) => ({
   subscribeFinance: (uid) => {
     if (!uid) return;
 
-    // Expenses subscription
+    // Expenses
     const expUnsub = onSnapshot(
       collection(db, "users", uid, "expenses"),
       (snapshot) => {
-        const expenses = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        set({ expenses });
+        set({
+          expenses: snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+        });
       }
     );
 
-    // Income subscription
+    // Income
     const incUnsub = onSnapshot(
       collection(db, "users", uid, "income"),
       (snapshot) => {
-        const income = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        set({ income });
+        set({
+          income: snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+        });
       }
     );
 
-    // Budget subscription (just one doc: "main")
+    // Budget
     const budUnsub = onSnapshot(
       doc(db, "users", uid, "budget", "main"),
       (snapshot) => {
@@ -84,7 +79,6 @@ const useFinanceStore = create((set, get) => ({
       }
     );
 
-    // Cleanup
     return () => {
       expUnsub();
       incUnsub();

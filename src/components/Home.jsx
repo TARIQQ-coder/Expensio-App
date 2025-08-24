@@ -122,7 +122,7 @@ const Home = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Add Expense */}
         <button
-          onClick={() => navigate("/dashboard/expenses")}
+          onClick={() => navigate("/dashboard/expenses", { state: { openModal: true } })}
           className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg"
         >
           <FaMoneyBill size={24} className="mb-2" /> + Add Expense
