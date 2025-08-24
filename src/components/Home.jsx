@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
-
-import { FaMoneyBill, FaChartPie, FaChartBar, FaWallet } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { FaMoneyBill, FaChartPie, FaChartBar, FaWallet,FaEye } from "react-icons/fa";
 import {
   BarChart,
   Bar,
@@ -16,6 +16,7 @@ import useFinanceStore from "../store/useFinanceStore";
 
 const Home = () => {
   const { expenses, income, budget } = useFinanceStore();
+  const navigate = useNavigate();
 
   // --- Helpers ---
   const totalIncome = useMemo(
@@ -117,29 +118,47 @@ const Home = () => {
       </div>
 
       <div className="bg-black/70 border border-white/10 rounded-lg p-5">
-        <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Add Expense */}
-          <button className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg">
-            <FaMoneyBill size={24} className="mb-2" /> + Add Expense
-          </button>
+      <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Add Expense */}
+        <button
+          onClick={() => navigate("/dashboard/expenses")}
+          className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg"
+        >
+          <FaMoneyBill size={24} className="mb-2" /> + Add Expense
+        </button>
 
-          {/* Add Income */}
-          <button className="flex flex-col items-center bg-green-600/20 hover:bg-green-600/30 p-4 rounded-lg">
-            <FaWallet size={24} className="mb-2" /> + Add Income
-          </button>
+        {/* Add Income */}
+        <button
+          onClick={() => navigate("/dashboard/income")}
+          className="flex flex-col items-center bg-green-600/20 hover:bg-green-600/30 p-4 rounded-lg"
+        >
+          <FaWallet size={24} className="mb-2" /> + Add Income
+        </button>
 
-          {/* View Budget */}
-          <button className="flex flex-col items-center bg-blue-600/20 hover:bg-blue-600/30 p-4 rounded-lg">
-            <FaChartPie size={24} className="mb-2" /> View Budget
-          </button>
+        {/* View Budget */}
+        <button
+          onClick={() => navigate("/dashboard/budget")}
+          className="flex flex-col items-center bg-blue-600/20 hover:bg-blue-600/30 p-4 rounded-lg"
+        >
+          <FaChartPie size={24} className="mb-2" /> 
+          <span className="flex items-center gap-2">
+            <FaEye /> View Budget
+          </span>
+        </button>
 
-          {/* View Reports */}
-          <button className="flex flex-col items-center bg-purple-600/20 hover:bg-purple-600/30 p-4 rounded-lg">
-            <FaChartBar size={24} className="mb-2" /> View Reports
-          </button>
-        </div>
+        {/* View Reports */}
+        <button
+          onClick={() => navigate("/dashboard/reports")}
+          className="flex flex-col items-center bg-purple-600/20 hover:bg-purple-600/30 p-4 rounded-lg"
+        >
+          <FaChartBar size={24} className="mb-2" /> 
+          <span className="flex items-center gap-2">
+            <FaEye /> View Reports
+          </span>
+        </button>
       </div>
+    </div>
 
       {/* 🔹 Bottom Row: Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
