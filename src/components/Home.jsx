@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
-import { FaWallet } from "react-icons/fa";
-import { MdFlight, MdOutlineShoppingCartCheckout } from "react-icons/md";
-import { IoReceiptOutline } from "react-icons/io5";
+
+import { FaMoneyBill, FaChartPie, FaChartBar, FaWallet } from "react-icons/fa";
 import {
   BarChart,
   Bar,
@@ -103,7 +102,9 @@ const Home = () => {
                       <td>{exp.category || "—"}</td>
                       <td>
                         {exp.date
-                          ? new Date(exp.date.seconds * 1000).toLocaleDateString()
+                          ? new Date(
+                              exp.date.seconds * 1000
+                            ).toLocaleDateString()
                           : "—"}
                       </td>
                       <td>€{exp.amount?.toFixed(2) || "0.00"}</td>
@@ -115,21 +116,27 @@ const Home = () => {
         </div>
       </div>
 
-      {/* 🔹 Middle Row: Quick Access */}
       <div className="bg-black/70 border border-white/10 rounded-lg p-5">
         <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Add Expense */}
           <button className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg">
-            <FaWallet size={24} className="mb-2" /> + New expense
+            <FaMoneyBill size={24} className="mb-2" /> + Add Expense
           </button>
+
+          {/* Add Income */}
+          <button className="flex flex-col items-center bg-green-600/20 hover:bg-green-600/30 p-4 rounded-lg">
+            <FaWallet size={24} className="mb-2" /> + Add Income
+          </button>
+
+          {/* View Budget */}
+          <button className="flex flex-col items-center bg-blue-600/20 hover:bg-blue-600/30 p-4 rounded-lg">
+            <FaChartPie size={24} className="mb-2" /> View Budget
+          </button>
+
+          {/* View Reports */}
           <button className="flex flex-col items-center bg-purple-600/20 hover:bg-purple-600/30 p-4 rounded-lg">
-            <IoReceiptOutline size={24} className="mb-2" /> + Add receipt
-          </button>
-          <button className="flex flex-col items-center bg-emerald-600/20 hover:bg-emerald-600/30 p-4 rounded-lg">
-            <MdOutlineShoppingCartCheckout size={24} className="mb-2" /> + Create report
-          </button>
-          <button className="flex flex-col items-center bg-red-600/20 hover:bg-red-600/30 p-4 rounded-lg">
-            <MdFlight size={24} className="mb-2" /> + Create trip
+            <FaChartBar size={24} className="mb-2" /> View Reports
           </button>
         </div>
       </div>

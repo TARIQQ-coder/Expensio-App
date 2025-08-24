@@ -4,12 +4,12 @@ import { NavLink } from "react-router-dom";
 import { 
   FaHome, 
   FaMoneyBill, 
-  FaPlane, 
-  FaCheckCircle, 
+  FaWallet, 
+  FaChartPie, 
   FaCog, 
-  FaPhone,
   FaBars, 
-  FaTimes
+  FaTimes,
+  FaChartArea 
 } from "react-icons/fa";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
 
@@ -49,15 +49,15 @@ const Sidebar = ({ user }) => {
             {[
               { to: "/dashboard", icon: <FaHome />, label: "Home" },
               { to: "/dashboard/expenses", icon: <FaMoneyBill />, label: "Expenses" },
-              { to: "/dashboard/trips", icon: <FaPlane />, label: "Trips" },
-              { to: "/dashboard/approvals", icon: <FaCheckCircle />, label: "Approvals" },
+              { to: "/dashboard/income", icon: <FaWallet />, label: "Income" },
+              { to: "/dashboard/budget", icon: <FaChartPie />, label: "Budget" },
+              { to: "/dashboard/reports", icon: <FaChartArea />, label: "Reports" },
               { to: "/dashboard/settings", icon: <FaCog />, label: "Settings" },
-              { to: "/dashboard/support", icon: <FaPhone />, label: "Support" },
             ].map(({ to, icon, label }) => (
               <NavLink
                 key={to}
                 to={to}
-                onClick={() => setIsOpen(false)} // close sidebar when navigating
+                onClick={() => setIsOpen(false)} // close sidebar on mobile when navigating
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2 rounded-lg transition ${
                     isActive
