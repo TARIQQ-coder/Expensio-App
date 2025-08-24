@@ -1,127 +1,174 @@
-// Home.jsx
-import React, { useEffect, useState } from "react";
-import { auth, db } from "../config/firebaseConfig";
+import React, { useMemo } from "react";
+import { FaWallet } from "react-icons/fa";
+import { MdFlight, MdOutlineShoppingCartCheckout } from "react-icons/md";
+import { IoReceiptOutline } from "react-icons/io5";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+} from "recharts";
 import useFinanceStore from "../store/useFinanceStore";
-import { setUpActions } from "../data/setUpActions";
-import { doc, setDoc } from "firebase/firestore";
-
-// Modals
-import AddIncomeModal from "../components/modals/AddIncomeModal";
-import AddExpenseModal from "../components/modals/AddExpenseModal";
-import SetBudgetModal from "../components/modals/SetBudgetModal";
 
 const Home = () => {
-  const {
-    expenses,
-    income,
-    budget,
-    subscribeFinance,
-    addExpense,
-    addIncome,
-    setBudget,
-  } = useFinanceStore();
+  const { expenses, income, budget } = useFinanceStore();
 
-  const [activeModal, setActiveModal] = useState(null);
-  const [userId, setUserId] = useState(null);
+  // --- Helpers ---
+  const totalIncome = useMemo(
+    () => income.reduce((sum, i) => sum + (i.amount || 0), 0),
+    [income]
+  );
 
-  useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        setUserId(user.uid);
+  const totalExpenses = useMemo(
+    () => expenses.reduce((sum, e) => sum + (e.amount || 0), 0),
+    [expenses]
+  );
 
-        // Ensure user doc exists
-        await setDoc(
-          doc(db, "users", user.uid),
-          { createdAt: new Date() },
-          { merge: true }
-        );
+  const remainingBudget = budget - totalExpenses;
 
-        // 🔄 Subscribe to finance
-        const unsubscribeFinance = subscribeFinance(user.uid);
-
-        // Cleanup when logout or unmount
-        return () => unsubscribeFinance && unsubscribeFinance();
-      } else {
-        setUserId(null);
-      }
+  // 📌 Group expenses by "date" for trend chart
+  const expensesOverTime = useMemo(() => {
+    const map = {};
+    expenses.forEach((e) => {
+      const date = e.date
+        ? new Date(e.date.seconds * 1000).toLocaleDateString()
+        : "Unknown";
+      map[date] = (map[date] || 0) + (e.amount || 0);
     });
+    return Object.entries(map).map(([date, amount]) => ({ date, amount }));
+  }, [expenses]);
 
-    return () => unsubscribeAuth();
-  }, [subscribeFinance]);
-
-  const hasData =
-    (expenses && expenses.length > 0) ||
-    (income && income.length > 0) ||
-    (budget && budget.amount);
-
-  const openModal = (type) => setActiveModal(type);
+  // 📌 Group expenses by "category"
+  const categorySpending = useMemo(() => {
+    const map = {};
+    expenses.forEach((e) => {
+      const category = e.category || "Other";
+      map[category] = (map[category] || 0) + (e.amount || 0);
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [expenses]);
 
   return (
-    <div className="lg:pl-70 pt-10 space-y-6">
-      {hasData ? (
-        <div className="text-center text-gray-400">
-          <p>Your spending overview, recent transactions, and charts will appear here.</p>
+    <div className="p-6 space-y-6 text-white">
+      {/* 🔹 Top Row: Pending Tasks + Recent Expenses */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pending Tasks */}
+        <div className="bg-black/70 border border-white/10 rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-4">Pending Tasks</h2>
+          <ul className="space-y-2 text-gray-300">
+            <li className="flex justify-between">
+              <span>Total Income</span>{" "}
+              <span className="font-bold">€{totalIncome.toFixed(2)}</span>
+            </li>
+            <li className="flex justify-between">
+              <span>Total Expenses</span>{" "}
+              <span className="font-bold">€{totalExpenses.toFixed(2)}</span>
+            </li>
+            <li className="flex justify-between">
+              <span>Remaining Budget</span>{" "}
+              <span className="font-bold">€{remainingBudget.toFixed(2)}</span>
+            </li>
+            <li className="flex justify-between">
+              <span>Number of Expenses</span>{" "}
+              <span className="font-bold">{expenses.length}</span>
+            </li>
+          </ul>
         </div>
-      ) : (
-        <div className="bg-black/70 border border-white/20 rounded-lg py-8 px-6 text-center">
-          <h2 className="text-2xl font-semibold text-white mb-4">
-            Welcome to Expensio 🎉
-          </h2>
-          <p className="text-gray-400 mb-6">
-            Looks like you’re new here! Let’s set up your account by adding
-            your income, budget, and first expense.
-          </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-2xl mx-auto">
-            {setUpActions.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => openModal(action.type)}
-                className="flex items-center justify-center space-x-3 bg-zinc-900/70 
-                           hover:bg-zinc-800 rounded-lg p-4 text-white transition-colors w-full"
-              >
-                <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full ${action.bg}`}
-                >
-                  <action.icon size={20} />
-                </div>
-                <span className="font-medium">+ {action.label}</span>
-              </button>
-            ))}
+        {/* Recent Expenses */}
+        <div className="bg-black/70 border border-white/10 rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-4">Recent Expenses</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-gray-400">
+                <tr>
+                  <th>Subject</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {expenses
+                  .slice(-5)
+                  .reverse()
+                  .map((exp) => (
+                    <tr key={exp.id}>
+                      <td>{exp.subject || "—"}</td>
+                      <td>{exp.category || "—"}</td>
+                      <td>
+                        {exp.date
+                          ? new Date(exp.date.seconds * 1000).toLocaleDateString()
+                          : "—"}
+                      </td>
+                      <td>€{exp.amount?.toFixed(2) || "0.00"}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Modals */}
-      {activeModal === "income" && (
-        <AddIncomeModal
-          onClose={() => setActiveModal(null)}
-          onSave={(data) => {
-            if (userId) addIncome(userId, data);
-            setActiveModal(null);
-          }}
-        />
-      )}
+      {/* 🔹 Middle Row: Quick Access */}
+      <div className="bg-black/70 border border-white/10 rounded-lg p-5">
+        <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg">
+            <FaWallet size={24} className="mb-2" /> + New expense
+          </button>
+          <button className="flex flex-col items-center bg-purple-600/20 hover:bg-purple-600/30 p-4 rounded-lg">
+            <IoReceiptOutline size={24} className="mb-2" /> + Add receipt
+          </button>
+          <button className="flex flex-col items-center bg-emerald-600/20 hover:bg-emerald-600/30 p-4 rounded-lg">
+            <MdOutlineShoppingCartCheckout size={24} className="mb-2" /> + Create report
+          </button>
+          <button className="flex flex-col items-center bg-red-600/20 hover:bg-red-600/30 p-4 rounded-lg">
+            <MdFlight size={24} className="mb-2" /> + Create trip
+          </button>
+        </div>
+      </div>
 
-      {activeModal === "expense" && (
-        <AddExpenseModal
-          onClose={() => setActiveModal(null)}
-          onSave={(data) => {
-            if (userId) addExpense(userId, data);
-            setActiveModal(null);
-          }}
-        />
-      )}
+      {/* 🔹 Bottom Row: Reports */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Spending Over Time */}
+        <div className="bg-black/70 border border-white/10 rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-4">Spending Over Time</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={expensesOverTime}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="date" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="amount"
+                stroke="#4ade80"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
-      {activeModal === "budget" && (
-        <SetBudgetModal
-          onClose={() => setActiveModal(null)}
-          onSave={(data) => {
-            if (userId) setBudget(userId, data);
-            setActiveModal(null);
-          }}
-        />
-      )}
+        {/* Category Spending */}
+        <div className="bg-black/70 border border-white/10 rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-4">Day-to-Day Expenses</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={categorySpending}>
+              <XAxis dataKey="name" stroke="#888" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#a855f7" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 };
