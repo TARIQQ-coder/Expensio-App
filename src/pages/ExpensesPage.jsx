@@ -5,7 +5,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewExpenseModal from "../components/modals/NewExpenseModal";
-import ConfirmToast from "../components/ConfirmToast";
 import { showConfirmToast } from "../components/ConfirmToast";
 
 const ExpensesPage = () => {

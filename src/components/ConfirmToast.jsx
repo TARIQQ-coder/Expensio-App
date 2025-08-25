@@ -2,21 +2,23 @@
 import React from "react";
 import { toast } from "react-toastify";
 
-const ConfirmToast = ({ message, onConfirm }) => {
-  const id = "confirm-toast"; // unique id so multiple toasts don’t overlap
-
-  const handleConfirm = () => {
-    toast.dismiss(id); // close the confirm toast
-    onConfirm(); // run delete logic
-    toast.success("✅ Expense deleted successfully!"); // show success toast
+const ConfirmToast = ({ message, onConfirm, toastId }) => {
+  const handleConfirm = async () => {
+    try {
+      toast.dismiss(toastId);
+      await onConfirm(); // ✅ wait for deletion
+      toast.success("✅ Expense deleted successfully!");
+    } catch (error) {
+      toast.error("❌ Failed to delete expense");
+      console.error(error);
+    }
   };
 
   const handleCancel = () => {
-    toast.dismiss(id);
-    toast.info("❌ Deletion cancelled"); // optional info toast
+    toast.dismiss(toastId);
+    toast.info("❌ Deletion cancelled");
   };
 
-  // Render the toast UI
   return (
     <div className="flex flex-col gap-2">
       <p>{message}</p>
@@ -39,16 +41,15 @@ const ConfirmToast = ({ message, onConfirm }) => {
 };
 
 export const showConfirmToast = (message, onConfirm) => {
+  const id = "confirm-toast";
   toast(
-    <ConfirmToast message={message} onConfirm={onConfirm} />,
+    <ConfirmToast message={message} onConfirm={onConfirm} toastId={id} />,
     {
-      toastId: "confirm-toast",
-      autoClose: false, // stay until user acts
+      toastId: id,
+      autoClose: false,
       closeOnClick: false,
       draggable: false,
       position: "top-center",
     }
   );
 };
-
-export default ConfirmToast;
