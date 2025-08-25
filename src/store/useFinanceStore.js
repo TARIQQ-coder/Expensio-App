@@ -10,6 +10,8 @@ import {
   query,
   updateDoc,
   deleteDoc,
+  orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
 
 const useFinanceStore = create((set) => ({
@@ -26,7 +28,7 @@ const useFinanceStore = create((set) => ({
     try {
       await addDoc(collection(db, "users", uid, "expenses"), {
         ...expense,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(), // ✅ Firestore timestamp
       });
     } catch (err) {
       console.error("🔥 Error adding expense:", err);
@@ -43,7 +45,7 @@ const useFinanceStore = create((set) => ({
       const expRef = doc(db, "users", uid, "expenses", expenseId);
       await updateDoc(expRef, {
         ...updatedExpense,
-        updatedAt: new Date(),
+        updatedAt: serverTimestamp(), // ✅ Firestore timestamp
       });
     } catch (err) {
       console.error("🔥 Error updating expense:", err);
@@ -69,7 +71,7 @@ const useFinanceStore = create((set) => ({
     try {
       await addDoc(collection(db, "users", uid, "income"), {
         ...income,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
     } catch (err) {
       console.error("🔥 Error adding income:", err);
@@ -82,19 +84,19 @@ const useFinanceStore = create((set) => ({
     try {
       await setDoc(doc(db, "users", uid, "budget", "main"), {
         ...budget,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
     } catch (err) {
       console.error("🔥 Error setting budget:", err);
     }
   },
 
-  // 🔄 Subscribe ONLY to expenses
+  // 🔄 Subscribe ONLY to expenses (ordered by createdAt ASC)
   subscribeExpenses: (uid) => {
     if (!uid) return;
 
     const expUnsub = onSnapshot(
-      query(collection(db, "users", uid, "expenses")),
+      query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc")),
       (snapshot) => {
         set({
           expenses: snapshot.docs.map((doc) => ({
@@ -112,9 +114,9 @@ const useFinanceStore = create((set) => ({
   subscribeFinance: (uid) => {
     if (!uid) return;
 
-    // Expenses
+    // Expenses (ordered by createdAt ASC)
     const expUnsub = onSnapshot(
-      query(collection(db, "users", uid, "expenses")),
+      query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc")),
       (snapshot) => {
         set({
           expenses: snapshot.docs.map((doc) => ({
@@ -125,9 +127,9 @@ const useFinanceStore = create((set) => ({
       }
     );
 
-    // Income
+    // Income (ordered by createdAt ASC)
     const incUnsub = onSnapshot(
-      query(collection(db, "users", uid, "income")),
+      query(collection(db, "users", uid, "income"), orderBy("createdAt", "asc")),
       (snapshot) => {
         set({
           income: snapshot.docs.map((doc) => ({

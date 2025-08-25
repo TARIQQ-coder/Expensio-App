@@ -15,24 +15,27 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
     amount: "",
     currency: "GHS",
     category: "Other",
-    notes: "",
-    status: "Unpaid", // ✅ default
   });
 
   // ✅ If editingExpense is provided, pre-fill the form
   useEffect(() => {
-    if (editingExpense) {
-      setForm({
-        title: editingExpense.title || "",
-        date: editingExpense.date || "",
-        amount: editingExpense.amount || "",
-        currency: editingExpense.currency || "GHS",
-        category: editingExpense.category || "Other",
-        notes: editingExpense.notes || "",
-        status: editingExpense.status || "Unpaid",
-      });
-    }
-  }, [editingExpense]);
+  if (editingExpense) {
+    setForm({
+      title: editingExpense.title || "",
+      // ✅ convert Firestore Timestamp → yyyy-mm-dd string
+      date: editingExpense.date
+        ? new Date(
+            editingExpense.date.seconds
+              ? editingExpense.date.seconds * 1000 // Firestore timestamp
+              : editingExpense.date                // already JS Date
+          ).toISOString().split("T")[0]
+        : "",
+      amount: editingExpense.amount || "",
+      currency: editingExpense.currency || "GHS",
+      category: editingExpense.category || "Other",
+    });
+  }
+}, [editingExpense]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -50,12 +53,14 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
       await updateExpense(user.uid, editingExpense.id, {
         ...form,
         amount: Number(form.amount),
+        date: new Date(form.date),   // ✅ save as Date object (timestamp)
       });
     } else {
       await addExpense(user.uid, {
         ...form,
         amount: Number(form.amount),
-        createdAt: new Date(),
+        date: new Date(form.date),   // ✅ save as Date object (timestamp)
+        createdAt: new Date(),       // ✅ still track when added
       });
     }
     onClose();
@@ -160,32 +165,6 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
               <option>Entertainment</option>
               <option>Other</option>
             </select>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block mb-1 text-gray-300">Status</label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="w-full p-2 rounded bg-gray-800 text-white"
-            >
-              <option value="Paid">Paid</option>
-              <option value="Unpaid">Unpaid</option>
-            </select>
-          </div>
-
-          {/* Notes */}
-          <div className="md:col-span-2">
-            <label className="block mb-1 text-gray-300">Notes</label>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              className="w-full p-2 rounded bg-gray-800 text-white outline-none"
-              rows="3"
-            />
           </div>
 
           {/* Save button */}

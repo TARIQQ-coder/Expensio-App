@@ -1,4 +1,3 @@
-// src/pages/ExpensesPage.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
@@ -6,6 +5,7 @@ import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewExpenseModal from "../components/modals/NewExpenseModal";
 import { showConfirmToast } from "../components/ConfirmToast";
+import categoryIcons from "../data/categoryIcons";
 
 const ExpensesPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -38,10 +38,13 @@ const ExpensesPage = () => {
   };
 
   const handleDelete = (expenseId) => {
-  showConfirmToast("Are you sure you want to delete this expense?", async () => {
-    await deleteExpense(user.uid, expenseId);
-  });
-};
+    showConfirmToast(
+      "Are you sure you want to delete this expense?",
+      async () => {
+        await deleteExpense(user.uid, expenseId);
+      }
+    );
+  };
 
   return (
     <div className="p-6">
@@ -63,7 +66,7 @@ const ExpensesPage = () => {
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-y-2">
           <thead>
-            <tr className="bg-gray-800 text-gray-400 text-left text-sm">
+            <tr className="text-gray-400 text-left text-sm">
               <th className="px-4 py-2 font-semibold">DETAILS</th>
               <th className="px-4 py-2 font-semibold">CATEGORY</th>
               <th className="px-4 py-2 font-semibold">AMOUNT</th>
@@ -86,17 +89,25 @@ const ExpensesPage = () => {
                   : null;
 
                 const rowColor =
-                  index % 2 === 0 ? "bg-gray-700" : "bg-gray-500";
+                  index % 2 === 0 ? "bg-[#1b1b1b]" : "bg-[#28282a]";
+
+                // Get the icon component for the expense category
+                const Icon = categoryIcons[expense.category] || categoryIcons["Other"];
 
                 return (
                   <tr
                     key={expense.id}
-                    className={`${rowColor} rounded-xl shadow text-sm`}
+                    className={`${rowColor} rounded-xl shadow`}
                   >
-                    {/* DETAILS */}
-                    <td className="px-4 py-3 text-gray-100 font-medium">
-                      {expense.title}
-                    </td>
+                    {/* DETAILS with Category Icon */}
+                    <td className="px-4 py-3 text-gray-100 font-medium max-w-[300px]">
+  <div className="flex items-center gap-2 truncate">
+    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#124241]">
+      <Icon className="w-4 h-4 text-white" aria-label={expense.category || "Other"} />
+    </div>
+    <span className="truncate">{expense.title}</span>
+  </div>
+</td>
 
                     {/* CATEGORY */}
                     <td className="px-4 py-3 text-gray-300">
