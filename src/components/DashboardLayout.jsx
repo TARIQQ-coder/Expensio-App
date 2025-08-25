@@ -41,7 +41,7 @@ const DashboardLayout = () => {
       <Sidebar user={userData} />
 
       {/* Main content shifts right on lg screens */}
-      <div className="p-6 bg-gray-100 min-h-screen lg:ml-64">
+      <div className="p-6 bg-black min-h-screen lg:ml-64">
         <Outlet /> {/* Nested dashboard routes */}
       </div>
     </div>

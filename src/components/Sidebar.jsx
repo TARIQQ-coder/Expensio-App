@@ -23,14 +23,14 @@ const Sidebar = ({ user }) => {
       {/* Floating toggle button (mobile only) */}
       <button
         onClick={toggleSidebar}
-        className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-md bg-black text-white shadow-md"
+        className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-md bg-[#333232] text-white shadow-md"
       >
         {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-black text-gray-300 py-6 px-6 flex flex-col justify-between transform transition-transform duration-300 z-40
+        className={`fixed top-0 left-0 h-full w-64 bg-[#333232] text-gray-300 py-6 px-6 flex flex-col justify-between transform transition-transform duration-300 z-40
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         {/* Top Section - Profile */}
