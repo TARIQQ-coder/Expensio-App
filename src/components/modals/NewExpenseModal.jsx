@@ -1,21 +1,38 @@
 // src/components/modals/NewExpenseModal.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import useFinanceStore from "../../store/useFinanceStore";
 import { useAuth } from "../../context/AuthContext";
 
-const NewExpenseModal = ({ onClose }) => {
-  const { addExpense } = useFinanceStore();
+const NewExpenseModal = ({ onClose, editingExpense }) => {
+  const { addExpense, updateExpense } = useFinanceStore();
   const { user } = useAuth();
 
+  // State with default values
   const [form, setForm] = useState({
     title: "",
     date: "",
     amount: "",
-    currency: "USD",
+    currency: "GHS",
     category: "Other",
     notes: "",
+    status: "Unpaid", // ✅ default
   });
+
+  // ✅ If editingExpense is provided, pre-fill the form
+  useEffect(() => {
+    if (editingExpense) {
+      setForm({
+        title: editingExpense.title || "",
+        date: editingExpense.date || "",
+        amount: editingExpense.amount || "",
+        currency: editingExpense.currency || "GHS",
+        category: editingExpense.category || "Other",
+        notes: editingExpense.notes || "",
+        status: editingExpense.status || "Unpaid",
+      });
+    }
+  }, [editingExpense]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,15 +46,22 @@ const NewExpenseModal = ({ onClose }) => {
     }
 
     try {
+    if (editingExpense) {
+      await updateExpense(user.uid, editingExpense.id, {
+        ...form,
+        amount: Number(form.amount),
+      });
+    } else {
       await addExpense(user.uid, {
         ...form,
         amount: Number(form.amount),
         createdAt: new Date(),
       });
-      onClose(); // close modal after save
-    } catch (error) {
-      console.error("Error saving expense:", error);
     }
+    onClose();
+  } catch (error) {
+    console.error("Error saving expense:", error);
+  }
   };
 
   return (
@@ -51,7 +75,9 @@ const NewExpenseModal = ({ onClose }) => {
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">Add New Expense</h2>
+          <h2 className="text-xl font-semibold text-white">
+            {editingExpense ? "Edit Expense" : "Add New Expense"}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition"
@@ -136,6 +162,20 @@ const NewExpenseModal = ({ onClose }) => {
             </select>
           </div>
 
+          {/* Status */}
+          <div>
+            <label className="block mb-1 text-gray-300">Status</label>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className="w-full p-2 rounded bg-gray-800 text-white"
+            >
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+            </select>
+          </div>
+
           {/* Notes */}
           <div className="md:col-span-2">
             <label className="block mb-1 text-gray-300">Notes</label>
@@ -154,7 +194,7 @@ const NewExpenseModal = ({ onClose }) => {
               type="submit"
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white"
             >
-              Save Expense
+              {editingExpense ? "Update Expense" : "Save Expense"}
             </button>
           </div>
         </form>

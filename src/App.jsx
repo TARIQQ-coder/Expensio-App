@@ -1,6 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext"; // ✅ import context provider
+import { AuthProvider } from "./context/AuthContext"; 
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import SignUp from "./components/SignUp";
 import LogIn from "./components/LogIn";
@@ -28,6 +30,18 @@ const App = () => {
             <Route path="support" element={<div>Support Page</div>} />
           </Route>
         </Routes>
+
+        {/* ✅ Toastify container for global notifications */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="dark"
+        />
       </AuthProvider>
     </Router>
   );

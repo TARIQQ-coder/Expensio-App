@@ -1,18 +1,21 @@
 // src/pages/ExpensesPage.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Scissors } from "lucide-react"; // example icon
+import { Pencil, Trash2 } from "lucide-react";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewExpenseModal from "../components/modals/NewExpenseModal";
+import ConfirmToast from "../components/ConfirmToast";
+import { showConfirmToast } from "../components/ConfirmToast";
 
 const ExpensesPage = () => {
   const [showModal, setShowModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
   const { user } = useAuth();
-  const { expenses, subscribeFinance } = useFinanceStore();
+  const { expenses, subscribeFinance, deleteExpense } = useFinanceStore();
 
   // Auto-open modal if redirected with state
   useEffect(() => {
@@ -30,69 +33,118 @@ const ExpensesPage = () => {
     }
   }, [user, subscribeFinance]);
 
+  const handleEdit = (expense) => {
+    setEditingExpense(expense); // store full object
+    setShowModal(true);
+  };
+
+  const handleDelete = (expenseId) => {
+  showConfirmToast("Are you sure you want to delete this expense?", async () => {
+    await deleteExpense(user.uid, expenseId);
+  });
+};
+
   return (
     <div className="p-6">
-      {/* Add Expense Button */}
-      <button
-        onClick={() => setShowModal(true)}
-        className="px-4 py-2 bg-pink-600 rounded-lg mb-6 hover:bg-pink-700 transition"
-      >
-        + Add Expense
-      </button>
-
-      {/* Expenses List */}
-      <div className="space-y-4">
-        {expenses.length === 0 ? (
-          <p className="text-gray-400">No expenses recorded yet.</p>
-        ) : (
-          expenses.map((expense) => (
-            <div
-              key={expense.id}
-              className="flex items-center justify-between bg-gray-900 rounded-xl px-4 py-3 shadow"
-            >
-              {/* Left section: Checkbox + Icon + Info */}
-              <div className="flex items-center gap-3">
-                <input type="checkbox" className="accent-pink-600" />
-                <Scissors className="w-5 h-5 text-teal-500" />
-                <div>
-                  <p className="text-gray-100 font-medium">{expense.title}</p>
-                  <p className="text-gray-400 text-sm">
-                    {expense.date
-                      ? new Date(expense.date.seconds * 1000).toLocaleDateString()
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Middle section: Category */}
-              <p className="text-gray-300">{expense.category || "—"}</p>
-
-              {/* Amount */}
-              <p className="text-gray-100 font-semibold">
-                {expense.currency || "₵"}
-                {expense.amount}
-              </p>
-
-              {/* Notes */}
-              <p className="text-gray-400">{expense.notes || "—"}</p>
-
-              {/* Status badge */}
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  expense.status === "Submitted"
-                    ? "bg-green-600 text-white"
-                    : "bg-pink-700 text-white"
-                }`}
-              >
-                {expense.status || "Not Submitted"}
-              </span>
-            </div>
-          ))
-        )}
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6 border-b pb-2">
+        <h1 className="text-2xl font-bold text-gray-100">Expenses</h1>
+        <button
+          onClick={() => {
+            setEditingExpense(null); // reset for new expense
+            setShowModal(true);
+          }}
+          className="px-4 py-2 bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer"
+        >
+          + New Expense
+        </button>
       </div>
 
-      {/* New Expense Modal */}
-      {showModal && <NewExpenseModal onClose={() => setShowModal(false)} />}
+      {/* Expenses Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-separate border-spacing-y-2">
+          <thead>
+            <tr className="bg-gray-800 text-gray-400 text-left text-sm">
+              <th className="px-4 py-2 font-semibold">DETAILS</th>
+              <th className="px-4 py-2 font-semibold">CATEGORY</th>
+              <th className="px-4 py-2 font-semibold">AMOUNT</th>
+              <th className="px-4 py-2 font-semibold">DATE</th>
+              <th className="px-4 py-2 font-semibold">ACTIONS</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {expenses.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-gray-400 text-center py-4">
+                  No expenses recorded yet.
+                </td>
+              </tr>
+            ) : (
+              expenses.map((expense, index) => {
+                const dateObj = expense.date
+                  ? new Date(expense.date.seconds * 1000)
+                  : null;
+
+                const rowColor =
+                  index % 2 === 0 ? "bg-gray-700" : "bg-gray-500";
+
+                return (
+                  <tr
+                    key={expense.id}
+                    className={`${rowColor} rounded-xl shadow text-sm`}
+                  >
+                    {/* DETAILS */}
+                    <td className="px-4 py-3 text-gray-100 font-medium">
+                      {expense.title}
+                    </td>
+
+                    {/* CATEGORY */}
+                    <td className="px-4 py-3 text-gray-300">
+                      {expense.category || "—"}
+                    </td>
+
+                    {/* AMOUNT */}
+                    <td className="px-4 py-3 text-gray-100 font-semibold">
+                      {expense.currency || "₵"}
+                      {expense.amount}
+                    </td>
+
+                    {/* DATE */}
+                    <td className="px-4 py-3 text-gray-400">
+                      {dateObj ? dateObj.toLocaleDateString() : "—"}
+                    </td>
+
+                    {/* ACTIONS */}
+                    <td className="px-4 py-3 flex gap-3">
+                      <button
+                        onClick={() => handleEdit(expense)}
+                        className="text-blue-400 hover:text-blue-600"
+                      >
+                        <Pencil className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(expense.id)}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* New Expense Modal (supports editing) */}
+      {showModal && (
+        <NewExpenseModal
+          onClose={() => setShowModal(false)}
+          editingExpense={editingExpense} // 👈 send down for pre-fill
+        />
+      )}
     </div>
   );
 };

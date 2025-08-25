@@ -8,6 +8,8 @@ import {
   onSnapshot,
   doc,
   query,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 const useFinanceStore = create((set) => ({
@@ -28,6 +30,36 @@ const useFinanceStore = create((set) => ({
       });
     } catch (err) {
       console.error("🔥 Error adding expense:", err);
+    }
+  },
+
+  // ✏️ Update expense
+  updateExpense: async (uid, expenseId, updatedExpense) => {
+    if (!uid || !expenseId) {
+      console.error("❌ updateExpense called without uid or expenseId!");
+      return;
+    }
+    try {
+      const expRef = doc(db, "users", uid, "expenses", expenseId);
+      await updateDoc(expRef, {
+        ...updatedExpense,
+        updatedAt: new Date(),
+      });
+    } catch (err) {
+      console.error("🔥 Error updating expense:", err);
+    }
+  },
+
+  // 🗑️ Delete expense
+  deleteExpense: async (uid, expenseId) => {
+    if (!uid || !expenseId) {
+      console.error("❌ deleteExpense called without uid or expenseId!");
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, "users", uid, "expenses", expenseId));
+    } catch (err) {
+      console.error("🔥 Error deleting expense:", err);
     }
   },
 
