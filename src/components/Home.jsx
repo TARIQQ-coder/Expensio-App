@@ -132,7 +132,7 @@ const Home = () => {
 
         {/* Add Income */}
         <button
-          onClick={() => navigate("/dashboard/income")}
+          onClick={() => navigate("/dashboard/income", { state: { openModal: true } })}
           className="flex flex-col items-center bg-green-600/20 hover:bg-green-600/30 p-4 rounded-lg"
         >
           <FaWallet size={24} className="mb-2" /> + Add Income

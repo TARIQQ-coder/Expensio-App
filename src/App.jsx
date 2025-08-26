@@ -3,12 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext"; 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import SignUp from "./components/SignUp";
 import LogIn from "./components/LogIn";
 import DashboardLayout from "./components/DashboardLayout";
 import Home from "./components/Home";
 import ExpensesPage from "./pages/ExpensesPage";
+import IncomePage from "./pages/IncomePage";
 
 const App = () => {
   return (
@@ -24,7 +24,7 @@ const App = () => {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Home />} />
             <Route path="expenses" element={<ExpensesPage />} />
-            <Route path="trips" element={<div>Trips Page</div>} />
+            <Route path="income" element={<IncomePage />} />
             <Route path="approvals" element={<div>Approvals Page</div>} />
             <Route path="settings" element={<div>Settings Page</div>} />
             <Route path="support" element={<div>Support Page</div>} />

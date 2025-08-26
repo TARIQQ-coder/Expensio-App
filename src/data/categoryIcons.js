@@ -1,10 +1,12 @@
 // src/data/categoryIcon.js
-import { FaWallet,FaHouseUser } from "react-icons/fa";
+import { FaWallet,FaHouseUser, FaHandshake, FaGift } from "react-icons/fa";
 import { MdShoppingCart } from "react-icons/md";
 import { Utensils, Car, Music } from "lucide-react";
+import { IoMdCash } from "react-icons/io";
 
 
-const categoryIcons = {
+
+export const expenseIcons = {
   Transport: Car,
   Food: Utensils,
   Shopping: MdShoppingCart,
@@ -13,4 +15,11 @@ const categoryIcons = {
   Entertainment: Music,
 };
 
-export default categoryIcons;
+
+export const incomeIcons = {
+  Salary: IoMdCash,
+  Business: FaHandshake,
+  Gifts: FaGift,
+  Bonus: IoMdCash,
+  Other: FaWallet,
+}

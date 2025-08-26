@@ -19,45 +19,36 @@ const useFinanceStore = create((set) => ({
   income: [],
   budget: null,
 
-  // ➕ Add expense
+  // ------------------ EXPENSES ------------------ //
   addExpense: async (uid, expense) => {
-    if (!uid) {
-      console.error("❌ addExpense called without a valid userId!");
-      return;
-    }
+    if (!uid) return console.error("❌ addExpense: missing uid");
     try {
       await addDoc(collection(db, "users", uid, "expenses"), {
         ...expense,
-        createdAt: serverTimestamp(), // ✅ Firestore timestamp
+        createdAt: serverTimestamp(),
       });
     } catch (err) {
       console.error("🔥 Error adding expense:", err);
     }
   },
 
-  // ✏️ Update expense
   updateExpense: async (uid, expenseId, updatedExpense) => {
-    if (!uid || !expenseId) {
-      console.error("❌ updateExpense called without uid or expenseId!");
-      return;
-    }
+    if (!uid || !expenseId)
+      return console.error("❌ updateExpense missing uid or id");
     try {
       const expRef = doc(db, "users", uid, "expenses", expenseId);
       await updateDoc(expRef, {
         ...updatedExpense,
-        updatedAt: serverTimestamp(), // ✅ Firestore timestamp
+        updatedAt: serverTimestamp(),
       });
     } catch (err) {
       console.error("🔥 Error updating expense:", err);
     }
   },
 
-  // 🗑️ Delete expense
   deleteExpense: async (uid, expenseId) => {
-    if (!uid || !expenseId) {
-      console.error("❌ deleteExpense called without uid or expenseId!");
-      return;
-    }
+    if (!uid || !expenseId)
+      return console.error("❌ deleteExpense missing uid or id");
     try {
       await deleteDoc(doc(db, "users", uid, "expenses", expenseId));
     } catch (err) {
@@ -65,9 +56,9 @@ const useFinanceStore = create((set) => ({
     }
   },
 
-  // ➕ Add income
+  // ------------------ INCOME ------------------ //
   addIncome: async (uid, income) => {
-    if (!uid) return;
+    if (!uid) return console.error("❌ addIncome: missing uid");
     try {
       await addDoc(collection(db, "users", uid, "income"), {
         ...income,
@@ -78,9 +69,33 @@ const useFinanceStore = create((set) => ({
     }
   },
 
-  // ➕ Set budget
+  updateIncome: async (uid, incomeId, updatedIncome) => {
+    if (!uid || !incomeId)
+      return console.error("❌ updateIncome missing uid or id");
+    try {
+      const incRef = doc(db, "users", uid, "income", incomeId);
+      await updateDoc(incRef, {
+        ...updatedIncome,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("🔥 Error updating income:", err);
+    }
+  },
+
+  deleteIncome: async (uid, incomeId) => {
+    if (!uid || !incomeId)
+      return console.error("❌ deleteIncome missing uid or id");
+    try {
+      await deleteDoc(doc(db, "users", uid, "income", incomeId));
+    } catch (err) {
+      console.error("🔥 Error deleting income:", err);
+    }
+  },
+
+  // ------------------ BUDGET ------------------ //
   setBudget: async (uid, budget) => {
-    if (!uid) return;
+    if (!uid) return console.error("❌ setBudget: missing uid");
     try {
       await setDoc(doc(db, "users", uid, "budget", "main"), {
         ...budget,
@@ -91,7 +106,7 @@ const useFinanceStore = create((set) => ({
     }
   },
 
-  // 🔄 Subscribe ONLY to expenses (ordered by createdAt ASC)
+  // ------------------ SUBSCRIPTIONS ------------------ //
   subscribeExpenses: (uid) => {
     if (!uid) return;
 
@@ -110,11 +125,10 @@ const useFinanceStore = create((set) => ({
     return () => expUnsub();
   },
 
-  // 🔄 Subscribe to all finance data (expenses, income, budget)
   subscribeFinance: (uid) => {
     if (!uid) return;
 
-    // Expenses (ordered by createdAt ASC)
+    // Expenses
     const expUnsub = onSnapshot(
       query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc")),
       (snapshot) => {
@@ -127,7 +141,7 @@ const useFinanceStore = create((set) => ({
       }
     );
 
-    // Income (ordered by createdAt ASC)
+    // Income
     const incUnsub = onSnapshot(
       query(collection(db, "users", uid, "income"), orderBy("createdAt", "asc")),
       (snapshot) => {
@@ -140,7 +154,7 @@ const useFinanceStore = create((set) => ({
       }
     );
 
-    // Budget (only one doc: "main")
+    // Budget (single doc)
     const budUnsub = onSnapshot(
       doc(db, "users", uid, "budget", "main"),
       (snapshot) => {
