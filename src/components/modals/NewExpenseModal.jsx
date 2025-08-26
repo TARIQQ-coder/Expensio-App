@@ -118,7 +118,7 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
               value={form.date}
               onChange={handleChange}
               required
-              className="w-full p-2 rounded bg-gray-800 text-white outline-none"
+              className="w-full p-2 rounded bg-gray-800 text-white outline-none "
             />
           </div>
 
@@ -141,7 +141,7 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
                 name="currency"
                 value={form.currency}
                 onChange={handleChange}
-                className="p-2 rounded bg-gray-800 text-white"
+                className="p-2 rounded bg-gray-800 text-white cursor-pointer"
               >
                 <option>USD</option>
                 <option>EUR</option>

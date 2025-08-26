@@ -92,7 +92,8 @@ const ExpensesPage = () => {
                   index % 2 === 0 ? "bg-[#1b1b1b]" : "bg-[#28282a]";
 
                 // Get the icon component for the expense category
-                const Icon = categoryIcons[expense.category] || categoryIcons["Other"];
+                const Icon =
+                  categoryIcons[expense.category] || categoryIcons["Other"];
 
                 return (
                   <tr
@@ -100,14 +101,17 @@ const ExpensesPage = () => {
                     className={`${rowColor} rounded-xl shadow`}
                   >
                     {/* DETAILS with Category Icon */}
-                    <td className="px-4 py-3 text-gray-100 font-medium max-w-[300px]">
-  <div className="flex items-center gap-2 truncate">
-    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#124241]">
-      <Icon className="w-4 h-4 text-white" aria-label={expense.category || "Other"} />
-    </div>
-    <span className="truncate">{expense.title}</span>
-  </div>
-</td>
+                    <td className="px-4 py-4 text-gray-100 font-medium max-w-[300px]">
+                      <div className="flex items-center gap-2 truncate">
+                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#124241]">
+                          <Icon
+                            className="w-4 h-4 text-white"
+                            aria-label={expense.category || "Other"}
+                          />
+                        </div>
+                        <span className="truncate">{expense.title}</span>
+                      </div>
+                    </td>
 
                     {/* CATEGORY */}
                     <td className="px-4 py-3 text-gray-300">
@@ -115,9 +119,9 @@ const ExpensesPage = () => {
                     </td>
 
                     {/* AMOUNT */}
-                    <td className="px-4 py-3 text-gray-100 font-semibold">
-                      {expense.currency || "₵"}
-                      {expense.amount}
+                    <td className="px-4 py-3 text-gray-100 font-semibold tracking-wide">
+                      {expense.currency || "₵"}{" "}
+                      {(expense.amount ?? 0).toFixed(2)}
                     </td>
 
                     {/* DATE */}
@@ -126,7 +130,7 @@ const ExpensesPage = () => {
                     </td>
 
                     {/* ACTIONS */}
-                    <td className="px-4 py-3 flex gap-3">
+                    <td className="px-4 pt-5 flex gap-4">
                       <button
                         onClick={() => handleEdit(expense)}
                         className="text-blue-400 hover:text-blue-600"

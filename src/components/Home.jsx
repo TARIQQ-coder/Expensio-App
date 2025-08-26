@@ -58,48 +58,50 @@ const Home = () => {
       {/* 🔹 Top Row: Pending Tasks + Recent Expenses */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Tasks */}
-        <div className="bg-[#333232] border border-white/10 rounded-lg py-5">
-          <h2 className="text-lg font-semibold mb-4 border-b-2 pb-1 pl-4 border-white/20">Pending Tasks</h2>
-          <ul className="space-y-2 text-gray-300 px-5">
-            <li className="flex justify-between">
-              <span>Total Income</span>{" "}
-              <span className="font-bold">€{totalIncome.toFixed(2)}</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Total Expenses</span>{" "}
-              <span className="font-bold">€{totalExpenses.toFixed(2)}</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Remaining Budget</span>{" "}
-              <span className="font-bold">€{remainingBudget.toFixed(2)}</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Number of Expenses</span>{" "}
-              <span className="font-bold">{expenses.length}</span>
-            </li>
-          </ul>
-        </div>
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
+  <h2 className="text-lg font-semibold mb-4 border-b-2 pb-1 pl-4 border-white/20">
+    Pending Tasks
+  </h2>
+  <ul className="space-y-2 text-gray-300 px-5">
+    <li className="flex justify-between">
+      <span>Total Income</span>{" "}
+      <span className="font-bold">€{totalIncome.toFixed(2)}</span>
+    </li>
+    <li className="flex justify-between">
+      <span>Total Expenses</span>{" "}
+      <span className="font-bold">€{totalExpenses.toFixed(2)}</span>
+    </li>
+    <li className="flex justify-between">
+      <span>Remaining Budget</span>{" "}
+      <span className="font-bold">€{remainingBudget.toFixed(2)}</span>
+    </li>
+    <li className="flex justify-between">
+      <span>Number of Expenses</span>{" "}
+      <span className="font-bold">{expenses.length}</span>
+    </li>
+  </ul>
+</div>
 
         {/* Recent Expenses */}
-        <div className="bg-[#333232] border border-white/10 rounded-lg py-5">
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg ">
           <h2 className="text-lg font-semibold mb-4 border-b-2 pb-1 pl-4 border-white/20">Recent Expenses</h2>
           <div className="overflow-x-auto px-5">
             <table className="w-full text-left text-sm">
               <thead className="text-gray-400 ">
                 <tr>
-                  <th>Subject</th>
+                  <th>Item</th>
                   <th>Category</th>
                   <th>Date</th>
                   <th>Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10">
+              <tbody className="divide-y divide-white/10 ">
                 {expenses
                   .slice(-5)
                   .reverse()
                   .map((exp) => (
                     <tr key={exp.id}>
-                      <td>{exp.subject || "—"}</td>
+                      <td>{exp.title || "—"}</td>
                       <td>{exp.category || "—"}</td>
                       <td>
                         {exp.date
@@ -108,7 +110,7 @@ const Home = () => {
                             ).toLocaleDateString()
                           : "—"}
                       </td>
-                      <td>€{exp.amount?.toFixed(2) || "0.00"}</td>
+                      <td>GHS {exp.amount?.toFixed(2) || "0.00"}</td>
                     </tr>
                   ))}
               </tbody>
@@ -117,7 +119,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="bg-[#333232] border border-white/10 rounded-lg py-5">
+      <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
       <h2 className="text-lg font-semibold mb-4 border-b-2 pb-1 pl-4 border-white/20">Quick Access</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-5">
         {/* Add Expense */}
@@ -163,7 +165,7 @@ const Home = () => {
       {/* 🔹 Bottom Row: Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Spending Over Time */}
-        <div className="bg-[#333232] border border-white/10 rounded-lg py-5">
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
           <h2 className="text-lg font-semibold mb-4 border-b-2 pb-1 pl-4 border-white/20">Spending Over Time</h2>
           <div className="px-5">
             <ResponsiveContainer width="100%" height={250}>
@@ -186,7 +188,7 @@ const Home = () => {
         </div>
 
         {/* Category Spending */}
-        <div className="bg-[#333232] border border-white/10 rounded-lg py-5">
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
           <h2 className="text-lg font-semibold mb-4 border-b-2 pb-1 pl-4 border-white/20">Day-to-Day Expenses</h2>
           <div className="px-5">
             <ResponsiveContainer width="100%" height={250}>
