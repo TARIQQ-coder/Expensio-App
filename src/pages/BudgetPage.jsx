@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
+import { Pencil, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import SetBudgetModal from "../components/modals/SetBudgetModal";
+import { toast } from "react-toastify";
 
 const BudgetPage = () => {
   const { budgets, expenses, subscribeFinance } = useFinanceStore();
@@ -85,48 +87,153 @@ const BudgetPage = () => {
     setEditingBudget(null);
   };
 
+  const handleDeleteCategory = (categoryName) => {
+  toast.info(
+    ({ closeToast }) => (
+      <div className="flex flex-col gap-3">
+        <p>
+          Deleting this budget will not delete your expenses. They will still
+          appear in reports under <b>{categoryName}</b>. Continue?
+        </p>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={async () => {
+              await useFinanceStore
+                .getState()
+                .removeCategoryBudget(user.uid, yearMonth, categoryName);
+              toast.success(`${categoryName} budget deleted`);
+              closeToast();
+            }}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Confirm
+          </button>
+          <button
+            onClick={closeToast}
+            className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      autoClose: false,
+      closeOnClick: false,
+      draggable: false,
+    }
+  );
+};
+
+
   return (
     <div className="p-6 space-y-6 text-white">
       {isModalOpen && (
         <SetBudgetModal onClose={handleCloseModal} editingBudget={editingBudget} />
       )}
 
-      {/* Budget Overview */}
-      <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
-        <div className="flex justify-between items-center mb-4 border-b-2 pb-1 pl-4 pr-5 border-white/20">
-          <h2 className="text-lg font-semibold">Monthly Budget Overview</h2>
-          <button
+      <div className="flex items-center justify-between mb-6 border-b pb-2">
+        <h1 className="text-2xl font-bold text-gray-100">Budget</h1>
+        <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white"
           >
             <FaPlus size={16} /> Set Budget
           </button>
-        </div>
-        <div className="px-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <span className="text-gray-300">Total Budget</span>
-            <p className="font-bold text-xl">
-              GHS {totalMonthlyBudget.toFixed(2)}
-            </p>
-          </div>
-          <div>
-            <span className="text-gray-300">Total Spent</span>
-            <p className="font-bold text-xl">
-              GHS {totalExpenses.toFixed(2)}
-            </p>
-          </div>
-          <div>
-            <span className="text-gray-300">Remaining Budget</span>
-            <p
-              className={`font-bold text-xl ${
-                remainingMonthlyBudget < 0 ? "text-red-400" : "text-green-400"
-              }`}
-            >
-              GHS {remainingMonthlyBudget.toFixed(2)}
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* Budget Overview */}
+<div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
+  <div className="flex justify-between items-center mb-4 border-b-2 pb-1 pl-4 pr-5 border-white/20">
+    <h2 className="text-lg font-semibold">Monthly Budget Overview</h2>
+    <div className="flex gap-3">
+      {/* Edit button */}
+      <button
+        onClick={() =>
+          handleOpenModal({
+            category: "Total",
+            amount: totalMonthlyBudget,
+            currency: monthData.currency || "GHS",
+            period: "Monthly",
+            startDate: new Date(),
+          })
+        }
+        className="text-blue-400 hover:text-blue-300 cursor-pointer"
+      >
+        <Pencil size={18} />
+      </button>
+
+      {/* Delete button */}
+      <button
+        onClick={() => {
+          toast.info(
+            ({ closeToast }) => (
+              <div className="flex flex-col gap-3">
+                <p>
+                  Deleting this monthly budget will not delete your expenses.
+                  They will still appear in reports. Continue?
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={async () => {
+                      await useFinanceStore
+                        .getState()
+                        .removeTotalBudget(user.uid, yearMonth);
+                      toast.success("Monthly total budget deleted");
+                      closeToast();
+                    }}
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={closeToast}
+                    className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ),
+            {
+              autoClose: false,
+              closeOnClick: false,
+              draggable: false,
+            }
+          );
+        }}
+        className="text-red-400 hover:text-red-300 cursor-pointer"
+      >
+        <Trash2 size={18} />
+      </button>
+    </div>
+  </div>
+
+  <div className="px-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <span className="text-gray-300">Total Budget</span>
+      <p className="font-bold text-xl">
+        GHS {totalMonthlyBudget.toFixed(2)}
+      </p>
+    </div>
+    <div>
+      <span className="text-gray-300">Total Spent</span>
+      <p className="font-bold text-xl">
+        GHS {totalExpenses.toFixed(2)}
+      </p>
+    </div>
+    <div>
+      <span className="text-gray-300">Remaining Budget</span>
+      <p
+        className={`font-bold text-xl ${
+          remainingMonthlyBudget < 0 ? "text-red-400" : "text-green-400"
+        }`}
+      >
+        GHS {remainingMonthlyBudget.toFixed(2)}
+      </p>
+    </div>
+  </div>
+</div>
 
       {/* Category Budgets */}
       <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg py-5 shadow-lg">
@@ -159,7 +266,7 @@ const BudgetPage = () => {
                   >
                     {budget.currency} {budget.remaining.toFixed(2)}
                   </td>
-                  <td>
+                  <td className="flex gap-2">
                     <button
                       onClick={() =>
                         handleOpenModal({
@@ -170,9 +277,12 @@ const BudgetPage = () => {
                           startDate: new Date(),
                         })
                       }
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-blue-400 hover:text-blue-300 cursor-pointer"
                     >
-                      Edit
+                      <Pencil size={16} />
+                    </button>
+                    <button onClick={() => handleDeleteCategory(budget.name)} className="text-red-400 hover:text-red-300 cursor-pointer">
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

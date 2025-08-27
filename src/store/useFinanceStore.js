@@ -12,6 +12,7 @@ import {
   deleteDoc,
   orderBy,
   serverTimestamp,
+  deleteField,
 } from "firebase/firestore";
 
 const useFinanceStore = create((set) => ({
@@ -69,7 +70,7 @@ const useFinanceStore = create((set) => ({
     }
   },
 
-  // 🏦 Set category budget (fix merge issue)
+  // 🏦 Set category budget
   setCategoryBudget: async (
     uid,
     yearMonth,
@@ -83,7 +84,6 @@ const useFinanceStore = create((set) => ({
     try {
       const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
 
-      // Use merge with nested object to safely update category
       await setDoc(
         budgetRef,
         {
@@ -96,7 +96,6 @@ const useFinanceStore = create((set) => ({
         { merge: true }
       );
 
-      // Update local state immediately
       set((state) => ({
         budgets: {
           ...state.budgets,
@@ -132,7 +131,6 @@ const useFinanceStore = create((set) => ({
         { merge: true }
       );
 
-      // Update local state immediately
       set((state) => ({
         budgets: {
           ...state.budgets,
@@ -148,16 +146,39 @@ const useFinanceStore = create((set) => ({
     }
   },
 
+  // 🗑️ Remove total monthly budget
+  removeTotalBudget: async (uid, yearMonth) => {
+    if (!uid || !yearMonth) return;
+    try {
+      const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
+
+      await updateDoc(budgetRef, {
+        total: deleteField(),
+        updatedAt: serverTimestamp(),
+      });
+
+      set((state) => {
+        const existing = state.budgets[yearMonth] || {};
+        const { total, ...rest } = existing;
+        return {
+          budgets: {
+            ...state.budgets,
+            [yearMonth]: rest,
+          },
+        };
+      });
+    } catch (err) {
+      console.error("🔥 Error removing total budget:", err);
+    }
+  },
+
   // 🔄 Subscribe to all finance data
   subscribeFinance: (uid, yearMonth) => {
     if (!uid) return;
 
     // Expenses
     const expUnsub = onSnapshot(
-      query(
-        collection(db, "users", uid, "expenses"),
-        orderBy("createdAt", "asc")
-      ),
+      query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc")),
       (snapshot) => {
         set({
           expenses: snapshot.docs.map((doc) => ({
@@ -170,10 +191,7 @@ const useFinanceStore = create((set) => ({
 
     // Income
     const incUnsub = onSnapshot(
-      query(
-        collection(db, "users", uid, "income"),
-        orderBy("createdAt", "asc")
-      ),
+      query(collection(db, "users", uid, "income"), orderBy("createdAt", "asc")),
       (snapshot) => {
         set({
           income: snapshot.docs.map((doc) => ({
@@ -199,11 +217,41 @@ const useFinanceStore = create((set) => ({
       });
     }
 
+    // Cleanup
     return () => {
       expUnsub();
       incUnsub();
       if (budUnsub) budUnsub();
     };
+  },
+
+  // 🗑️ Remove a category budget
+  removeCategoryBudget: async (uid, yearMonth, category) => {
+    if (!uid || !yearMonth || !category) return;
+    try {
+      const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
+
+      await updateDoc(budgetRef, {
+        [`categories.${category}`]: deleteField(),
+        updatedAt: serverTimestamp(),
+      });
+
+      set((state) => {
+        const existing = state.budgets[yearMonth]?.categories || {};
+        const { [category]: _, ...rest } = existing;
+        return {
+          budgets: {
+            ...state.budgets,
+            [yearMonth]: {
+              ...state.budgets[yearMonth],
+              categories: rest,
+            },
+          },
+        };
+      });
+    } catch (err) {
+      console.error("🔥 Error removing category budget:", err);
+    }
   },
 }));
 

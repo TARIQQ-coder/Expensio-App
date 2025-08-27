@@ -54,7 +54,6 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
       ? new Date(form.startDate).toISOString().slice(0, 7)
       : "";
 
-    // Duplicate check for non-Total categories
     const existingCategories = budgets[yearMonth]?.categories || {};
     const isDuplicate =
       form.category !== "Total" &&
@@ -70,7 +69,7 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
 
     try {
       if (form.category === "Total") {
-        await setTotalBudget(user.uid, yearMonth, Number(form.amount));
+        await setTotalBudget(user.uid, yearMonth, Number(form.amount), form.currency);
       } else {
         await setCategoryBudget(
           user.uid,
@@ -85,10 +84,12 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
 
       onClose(); // close modal after save
     } catch (err) {
-      console.error("Error saving budget:", err);
+      console.error("🔥 Error saving budget:", err);
       setError("Failed to save budget. Please try again.");
     }
   };
+
+  const isTotal = form.category === "Total";
 
   return (
     <div
@@ -102,7 +103,13 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">
-            {editingBudget ? "Edit Budget" : "Set New Budget"}
+            {editingBudget
+              ? isTotal
+                ? "Edit Total Monthly Budget"
+                : "Edit Category Budget"
+              : isTotal
+              ? "Set Total Monthly Budget"
+              : "Set New Category Budget"}
           </h2>
           <button
             onClick={onClose}
@@ -124,25 +131,26 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          {/* Category */}
-          <div>
-            <label className="block mb-1 text-gray-300">Category*</label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              required
-              className="w-full p-2 rounded bg-gray-800 text-white"
-            >
-              <option>Total</option>
-              <option>Food</option>
-              <option>Transportation</option>
-              <option>Housing</option>
-              <option>Entertainment</option>
-              <option>Utilities</option>
-              <option>Other</option>
-            </select>
-          </div>
+          {/* Category (hidden for Total) */}
+          {!isTotal && (
+            <div>
+              <label className="block mb-1 text-gray-300">Category*</label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                required
+                className="w-full p-2 rounded bg-gray-800 text-white"
+              >
+                <option>Food</option>
+                <option>Transportation</option>
+                <option>Housing</option>
+                <option>Entertainment</option>
+                <option>Utilities</option>
+                <option>Other</option>
+              </select>
+            </div>
+          )}
 
           {/* Amount + Currency */}
           <div className="flex gap-2">
@@ -174,34 +182,38 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
             </div>
           </div>
 
-          {/* Period */}
-          <div>
-            <label className="block mb-1 text-gray-300">Period*</label>
-            <select
-              name="period"
-              value={form.period}
-              onChange={handleChange}
-              required
-              className="w-full p-2 rounded bg-gray-800 text-white"
-            >
-              <option>Weekly</option>
-              <option>Monthly</option>
-              <option>Yearly</option>
-            </select>
-          </div>
+          {/* Period (skip for Total) */}
+          {!isTotal && (
+            <div>
+              <label className="block mb-1 text-gray-300">Period*</label>
+              <select
+                name="period"
+                value={form.period}
+                onChange={handleChange}
+                required
+                className="w-full p-2 rounded bg-gray-800 text-white"
+              >
+                <option>Weekly</option>
+                <option>Monthly</option>
+                <option>Yearly</option>
+              </select>
+            </div>
+          )}
 
-          {/* Start Date */}
-          <div>
-            <label className="block mb-1 text-gray-300">Start Date*</label>
-            <input
-              type="date"
-              name="startDate"
-              value={form.startDate}
-              onChange={handleChange}
-              required
-              className="w-full p-2 rounded bg-gray-800 text-white outline-none"
-            />
-          </div>
+          {/* Start Date (skip for Total) */}
+          {!isTotal && (
+            <div>
+              <label className="block mb-1 text-gray-300">Start Date*</label>
+              <input
+                type="date"
+                name="startDate"
+                value={form.startDate}
+                onChange={handleChange}
+                required
+                className="w-full p-2 rounded bg-gray-800 text-white outline-none"
+              />
+            </div>
+          )}
 
           {/* Save */}
           <div className="md:col-span-2 flex justify-end mt-6">
