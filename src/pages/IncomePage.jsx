@@ -71,7 +71,7 @@ const IncomePage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowMonthGrid(!showMonthGrid)}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20"
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 text-white"
             title="Filter by month"
           >
             <FaFilter size={16} />

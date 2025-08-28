@@ -10,6 +10,7 @@ import Home from "./components/Home";
 import ExpensesPage from "./pages/ExpensesPage";
 import IncomePage from "./pages/IncomePage";
 import BudgetPage from "./pages/BudgetPage";
+import ReportsPage from "./pages/ReportsPage";
 
 const App = () => {
   return (
@@ -27,8 +28,8 @@ const App = () => {
             <Route path="expenses" element={<ExpensesPage />} />
             <Route path="income" element={<IncomePage />} />
             <Route path="budget" element={<BudgetPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<div>Settings Page</div>} />
-            <Route path="support" element={<div>Support Page</div>} />
           </Route>
         </Routes>
 
