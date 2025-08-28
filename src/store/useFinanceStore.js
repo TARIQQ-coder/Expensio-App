@@ -23,7 +23,7 @@ const useFinanceStore = create((set) => ({
 
   // ➕ Add expense
   addExpense: async (uid, expense) => {
-    if (!uid) return;
+    if (!uid) throw new Error("User ID is required");
     try {
       await addDoc(collection(db, "users", uid, "expenses"), {
         ...expense,
@@ -31,12 +31,13 @@ const useFinanceStore = create((set) => ({
       });
     } catch (err) {
       console.error("🔥 Error adding expense:", err);
+      throw err;
     }
   },
 
   // ✏️ Update expense
   updateExpense: async (uid, expenseId, updatedExpense) => {
-    if (!uid || !expenseId) return;
+    if (!uid || !expenseId) throw new Error("User ID and expense ID are required");
     try {
       const expRef = doc(db, "users", uid, "expenses", expenseId);
       await updateDoc(expRef, {
@@ -45,22 +46,24 @@ const useFinanceStore = create((set) => ({
       });
     } catch (err) {
       console.error("🔥 Error updating expense:", err);
+      throw err;
     }
   },
 
   // 🗑️ Delete expense
   deleteExpense: async (uid, expenseId) => {
-    if (!uid || !expenseId) return;
+    if (!uid || !expenseId) throw new Error("User ID and expense ID are required");
     try {
       await deleteDoc(doc(db, "users", uid, "expenses", expenseId));
     } catch (err) {
       console.error("🔥 Error deleting expense:", err);
+      throw err;
     }
   },
 
   // ➕ Add income
   addIncome: async (uid, income) => {
-    if (!uid) return;
+    if (!uid) throw new Error("User ID is required");
     try {
       await addDoc(collection(db, "users", uid, "income"), {
         ...income,
@@ -68,12 +71,13 @@ const useFinanceStore = create((set) => ({
       });
     } catch (err) {
       console.error("🔥 Error adding income:", err);
+      throw err;
     }
   },
 
   // ✏️ Update income
   updateIncome: async (uid, incomeId, updatedIncome) => {
-    if (!uid || !incomeId) return;
+    if (!uid || !incomeId) throw new Error("User ID and income ID are required");
     try {
       const incRef = doc(db, "users", uid, "income", incomeId);
       await updateDoc(incRef, {
@@ -81,17 +85,19 @@ const useFinanceStore = create((set) => ({
         updatedAt: serverTimestamp(),
       });
     } catch (err) {
-      console.error("🔥 Error updating income:", err);
+      console.error("�fire: Error updating income:", err);
+      throw err;
     }
   },
 
   // 🗑️ Delete income
   deleteIncome: async (uid, incomeId) => {
-    if (!uid || !incomeId) return;
+    if (!uid || !incomeId) throw new Error("User ID and income ID are required");
     try {
       await deleteDoc(doc(db, "users", uid, "income", incomeId));
     } catch (err) {
       console.error("🔥 Error deleting income:", err);
+      throw err;
     }
   },
 
@@ -105,17 +111,16 @@ const useFinanceStore = create((set) => ({
     period = "Monthly",
     startDate = new Date()
   ) => {
-    if (!uid || !yearMonth || !category) return;
+    if (!uid || !yearMonth || !category) throw new Error("User ID, yearMonth, and category are required");
     try {
       const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
-
       await setDoc(
         budgetRef,
         {
           categories: { [category]: amount },
           currency,
           period,
-          startDate,
+          startDate: Timestamp.fromDate(new Date(startDate)),
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -132,18 +137,19 @@ const useFinanceStore = create((set) => ({
             },
             currency,
             period,
-            startDate,
+            startDate: new Date(startDate),
           },
         },
       }));
     } catch (err) {
       console.error("🔥 Error setting category budget:", err);
+      throw err;
     }
   },
 
   // 🏦 Set total monthly budget
   setTotalBudget: async (uid, yearMonth, amount, currency = "GHS") => {
-    if (!uid || !yearMonth) return;
+    if (!uid || !yearMonth) throw new Error("User ID and yearMonth are required");
     try {
       const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
       await setDoc(
@@ -168,15 +174,15 @@ const useFinanceStore = create((set) => ({
       }));
     } catch (err) {
       console.error("🔥 Error setting total budget:", err);
+      throw err;
     }
   },
 
   // 🗑️ Remove total monthly budget
   removeTotalBudget: async (uid, yearMonth) => {
-    if (!uid || !yearMonth) return;
+    if (!uid || !yearMonth) throw new Error("User ID and yearMonth are required");
     try {
       const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
-
       await updateDoc(budgetRef, {
         total: deleteField(),
         updatedAt: serverTimestamp(),
@@ -194,14 +200,42 @@ const useFinanceStore = create((set) => ({
       });
     } catch (err) {
       console.error("🔥 Error removing total budget:", err);
+      throw err;
+    }
+  },
+
+  // 🗑️ Remove a category budget
+  removeCategoryBudget: async (uid, yearMonth, category) => {
+    if (!uid || !yearMonth || !category) throw new Error("User ID, yearMonth, and category are required");
+    try {
+      const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
+      await updateDoc(budgetRef, {
+        [`categories.${category}`]: deleteField(),
+        updatedAt: serverTimestamp(),
+      });
+
+      set((state) => {
+        const existing = state.budgets[yearMonth]?.categories || {};
+        const { [category]: _, ...rest } = existing;
+        return {
+          budgets: {
+            ...state.budgets,
+            [yearMonth]: {
+              ...state.budgets[yearMonth],
+              categories: rest,
+            },
+          },
+        };
+      });
+    } catch (err) {
+      console.error("🔥 Error removing category budget:", err);
+      throw err;
     }
   },
 
   // 🔄 Subscribe to finance data for a specific month (or all data if yearMonth is not provided)
   subscribeFinance: (uid, yearMonth) => {
-    if (!uid) return;
-
-    // Calculate start and end timestamps for the selected month if yearMonth is provided
+    if (!uid) throw new Error("User ID is required");
     const [year, month] = yearMonth ? yearMonth.split("-") : [null, null];
     const startOfMonth = yearMonth
       ? Timestamp.fromDate(new Date(year, month - 1, 1))
@@ -210,7 +244,6 @@ const useFinanceStore = create((set) => ({
       ? Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59, 999))
       : null;
 
-    // Expenses subscription
     const expensesQuery = yearMonth
       ? query(
           collection(db, "users", uid, "expenses"),
@@ -229,7 +262,6 @@ const useFinanceStore = create((set) => ({
       });
     });
 
-    // Income subscription
     const incomeQuery = yearMonth
       ? query(
           collection(db, "users", uid, "income"),
@@ -248,7 +280,6 @@ const useFinanceStore = create((set) => ({
       });
     });
 
-    // Budgets subscription
     let budUnsub = null;
     if (yearMonth) {
       budUnsub = onSnapshot(doc(db, "users", uid, "budgets", yearMonth), (snap) => {
@@ -270,42 +301,11 @@ const useFinanceStore = create((set) => ({
       });
     }
 
-    // Cleanup
     return () => {
       expUnsub();
       incUnsub();
       if (budUnsub) budUnsub();
     };
   },
-
-  // 🗑️ Remove a category budget
-  removeCategoryBudget: async (uid, yearMonth, category) => {
-    if (!uid || !yearMonth || !category) return;
-    try {
-      const budgetRef = doc(db, "users", uid, "budgets", yearMonth);
-
-      await updateDoc(budgetRef, {
-        [`categories.${category}`]: deleteField(),
-        updatedAt: serverTimestamp(),
-      });
-
-      set((state) => {
-        const existing = state.budgets[yearMonth]?.categories || {};
-        const { [category]: _, ...rest } = existing;
-        return {
-          budgets: {
-            ...state.budgets,
-            [yearMonth]: {
-              ...state.budgets[yearMonth],
-              categories: rest,
-            },
-          },
-        };
-      });
-    } catch (err) {
-      console.error("🔥 Error removing category budget:", err);
-    }
-  },
 }));
-
 export default useFinanceStore;
