@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { FaPlus, FaRegCalendarAlt } from "react-icons/fa";
 import { Pencil, Trash2 } from "lucide-react";
 import {
@@ -19,20 +19,31 @@ const BudgetPage = () => {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
-
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [showMonthGrid, setShowMonthGrid] = useState(false);
+  const monthGridRef = useRef(null);
 
   const monthData = budgets[selectedMonth] || { total: 0, categories: {} };
   const categories = monthData.categories || {};
 
+  // Subscribe to finance data for the selected month
   useEffect(() => {
     if (user?.uid) {
       const unsub = subscribeFinance(user.uid, selectedMonth);
       return () => unsub && unsub();
     }
   }, [user, selectedMonth, subscribeFinance]);
+
+  // Close month picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (monthGridRef.current && !monthGridRef.current.contains(event.target)) {
+        setShowMonthGrid(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const totalMonthlyBudget = monthData.total || 0;
 
@@ -139,7 +150,7 @@ const BudgetPage = () => {
         <SetBudgetModal
           onClose={handleCloseModal}
           editingBudget={editingBudget}
-          selectedMonth={selectedMonth} // Pass selectedMonth to the modal
+          selectedMonth={selectedMonth}
         />
       )}
 
@@ -160,7 +171,7 @@ const BudgetPage = () => {
           onClick={() => setShowMonthGrid(!showMonthGrid)}
           className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20"
         >
-          <FaRegCalendarAlt />{" "}
+          <FaRegCalendarAlt />
           {new Date(selectedMonth + "-01").toLocaleString("default", {
             month: "long",
             year: "numeric",
@@ -168,7 +179,10 @@ const BudgetPage = () => {
         </button>
 
         {showMonthGrid && (
-          <div className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 mt-2 grid grid-cols-3 gap-2">
+          <div
+            ref={monthGridRef}
+            className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 mt-2 grid grid-cols-3 gap-2"
+          >
             {months.map((m) => (
               <button
                 key={m.value}

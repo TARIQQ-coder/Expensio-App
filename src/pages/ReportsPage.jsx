@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { FaFilter } from "react-icons/fa";
 import {
   BarChart,
@@ -24,6 +24,7 @@ const ReportsPage = () => {
   const { user } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(""); // Empty string for all data
   const [showMonthGrid, setShowMonthGrid] = useState(false);
+  const monthGridRef = useRef(null);
 
   // Subscribe to finance data
   useEffect(() => {
@@ -32,6 +33,17 @@ const ReportsPage = () => {
       return () => unsubscribe && unsubscribe();
     }
   }, [user, selectedMonth, subscribeFinance]);
+
+  // Close month picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (monthGridRef.current && !monthGridRef.current.contains(event.target)) {
+        setShowMonthGrid(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Calculate totals
   const totalIncome = useMemo(() => {
@@ -114,7 +126,10 @@ const ReportsPage = () => {
       {/* Month Picker Grid */}
       {showMonthGrid && (
         <div className="relative mb-6">
-          <div className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-3 gap-2">
+          <div
+            ref={monthGridRef}
+            className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-3 gap-2"
+          >
             {months.map((m) => (
               <button
                 key={m.value || "all"}

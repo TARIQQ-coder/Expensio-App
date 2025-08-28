@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 import { FaFilter } from "react-icons/fa";
@@ -13,6 +13,7 @@ const IncomePage = () => {
   const [editingIncome, setEditingIncome] = useState(null);
   const [showMonthGrid, setShowMonthGrid] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(""); // Empty string for all income
+  const monthGridRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -34,6 +35,17 @@ const IncomePage = () => {
       return () => unsubscribe && unsubscribe();
     }
   }, [user, selectedMonth, subscribeFinance]);
+
+  // Close month picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (monthGridRef.current && !monthGridRef.current.contains(event.target)) {
+        setShowMonthGrid(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleEdit = (incomeItem) => {
     setEditingIncome(incomeItem);
@@ -92,7 +104,10 @@ const IncomePage = () => {
       {/* Month Picker Grid */}
       {showMonthGrid && (
         <div className="relative mb-6">
-          <div className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-3 gap-2">
+          <div
+            ref={monthGridRef}
+            className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-3 gap-2"
+          >
             {months.map((m) => (
               <button
                 key={m.value || "all"}

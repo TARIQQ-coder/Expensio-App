@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaMoneyBill, FaChartPie, FaChartBar, FaWallet, FaEye, FaRegCalendarAlt } from "react-icons/fa";
 import {
@@ -23,6 +23,7 @@ const Home = () => {
   const currentMonth = new Date().toISOString().slice(0, 7); // e.g., "2025-08"
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [showMonthGrid, setShowMonthGrid] = useState(false);
+  const monthGridRef = useRef(null);
 
   // Subscribe to finance data for the selected month
   useEffect(() => {
@@ -31,6 +32,17 @@ const Home = () => {
       return () => unsub && unsub();
     }
   }, [user, selectedMonth, subscribeFinance]);
+
+  // Close month picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (monthGridRef.current && !monthGridRef.current.contains(event.target)) {
+        setShowMonthGrid(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Get the total budget and currency for the selected month
   const totalMonthlyBudget = budgets[selectedMonth]?.total || 0;
@@ -88,7 +100,7 @@ const Home = () => {
           onClick={() => setShowMonthGrid(!showMonthGrid)}
           className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20"
         >
-          <FaRegCalendarAlt />{" "}
+          <FaRegCalendarAlt />
           {new Date(selectedMonth + "-01").toLocaleString("default", {
             month: "long",
             year: "numeric",
@@ -96,7 +108,10 @@ const Home = () => {
         </button>
 
         {showMonthGrid && (
-          <div className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 mt-2 grid grid-cols-3 gap-2">
+          <div
+            ref={monthGridRef}
+            className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 mt-2 grid grid-cols-3 gap-2"
+          >
             {months.map((m) => (
               <button
                 key={m.value}
@@ -129,21 +144,21 @@ const Home = () => {
           </h2>
           <ul className="space-y-2 text-gray-300 px-5">
             <li className="flex justify-between">
-              <span>Total Income</span>{" "}
+              <span>Total Income</span>
               <span className="font-bold">{currency} {totalIncome.toFixed(2)}</span>
             </li>
             <li className="flex justify-between">
-              <span>Total Expenses</span>{" "}
+              <span>Total Expenses</span>
               <span className="font-bold">{currency} {totalExpenses.toFixed(2)}</span>
             </li>
             <li className="flex justify-between">
-              <span>Remaining Budget</span>{" "}
+              <span>Remaining Budget</span>
               <span className={`font-bold ${remainingBudget < 0 ? "text-red-400" : "text-green-400"}`}>
                 {currency} {remainingBudget.toFixed(2)}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>Number of Expenses</span>{" "}
+              <span>Number of Expenses</span>
               <span className="font-bold">{expenses.length}</span>
             </li>
           </ul>
