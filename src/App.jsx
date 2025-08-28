@@ -18,22 +18,22 @@ const App = () => {
       <AuthProvider>
         <Routes>
           {/* Auth pages */}
-          <Route path="/" element={<SignUp />} /> {/* Default page */}
+          <Route path="/" element={<SignUp />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<LogIn />} />
 
-          {/* Protected dashboard routes */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Home />} />
-            <Route path="expenses" element={<ExpensesPage />} />
-            <Route path="income" element={<IncomePage />} />
-            <Route path="budget" element={<BudgetPage />} />
-            <Route path="reports" element={<ReportsPage />} />
-            <Route path="settings" element={<div>Settings Page</div>} />
+          {/* Protected dashboard routes with DashboardLayout */}
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<Home />} />
+            <Route path="/dashboard/expenses" element={<ExpensesPage />} />
+            <Route path="/dashboard/income" element={<IncomePage />} />
+            <Route path="/dashboard/budget" element={<BudgetPage />} />
+            <Route path="/dashboard/reports" element={<ReportsPage />} />
+            <Route path="/dashboard/settings" element={<div>Settings Page</div>} />
           </Route>
         </Routes>
 
-        {/* ✅ Toastify container for global notifications */}
+        {/* Toastify container for global notifications */}
         <ToastContainer
           position="top-right"
           autoClose={3000}

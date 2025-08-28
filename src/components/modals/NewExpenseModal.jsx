@@ -163,6 +163,7 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
               <option>Transport</option>
               <option>Housing</option>
               <option>Entertainment</option>
+              <option>Utilities</option>
               <option>Other</option>
             </select>
           </div>

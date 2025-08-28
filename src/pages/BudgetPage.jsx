@@ -159,7 +159,7 @@ const BudgetPage = () => {
         <h1 className="text-2xl font-bold text-gray-100">Budget</h1>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white"
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold text-black"
         >
           <FaPlus size={16} /> Set Budget
         </button>

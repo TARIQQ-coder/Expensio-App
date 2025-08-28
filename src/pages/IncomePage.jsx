@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter,FaPlus } from "react-icons/fa";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewIncomeModal from "../components/modals/NewIncomeModal";
@@ -94,9 +94,10 @@ const IncomePage = () => {
               setEditingIncome(null);
               setShowModal(true);
             }}
-            className="px-4 py-2 bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer"
+            className=" bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer font-semibold flex items-center gap-2 px-4 py-2 text-black"
           >
-            + New Income
+            <FaPlus size={16} />
+            <span> New Income</span>
           </button>
         </div>
       </div>

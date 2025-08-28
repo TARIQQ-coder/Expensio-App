@@ -1,6 +1,5 @@
-// Sidebar.jsx
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { 
   FaHome, 
   FaMoneyBill, 
@@ -15,6 +14,7 @@ import { TbArrowsTransferUpDown } from "react-icons/tb";
 
 const Sidebar = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -47,24 +47,27 @@ const Sidebar = ({ user }) => {
           {/* Navigation */}
           <nav className="flex flex-col space-y-4">
             {[
-              { to: "/dashboard", icon: <FaHome />, label: "Home" },
+              { to: "/dashboard", icon: <FaHome />, label: "Home", exact: true },
               { to: "/dashboard/expenses", icon: <FaMoneyBill />, label: "Expenses" },
               { to: "/dashboard/income", icon: <FaWallet />, label: "Income" },
               { to: "/dashboard/budget", icon: <FaChartPie />, label: "Budget" },
               { to: "/dashboard/reports", icon: <FaChartArea />, label: "Reports" },
               { to: "/dashboard/settings", icon: <FaCog />, label: "Settings" },
-            ].map(({ to, icon, label }) => (
+            ].map(({ to, icon, label, exact }) => (
               <NavLink
                 key={to}
                 to={to}
-                onClick={() => setIsOpen(false)} // close sidebar on mobile when navigating
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2 rounded-lg transition ${
-                    isActive
-                      ? "bg-white/15 text-teal-400 border border-[0_0_10px_#14b8a6]"
-                      : "hover:bg-gray-900"
-                  }`
-                }
+                end={exact} // Exact matching for Home route
+                onClick={() => setIsOpen(false)} // Close sidebar on mobile
+                className={({ isActive }) => {
+                  // Explicitly check exact path for Home to avoid partial matching
+                  const isHomeActive = exact ? location.pathname === to : isActive;
+                  return `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                    isHomeActive
+                      ? "bg-white/15 text-teal-400 border-r-4 border-teal-500"
+                      : "text-gray-300 hover:bg-gray-900 hover:text-gray-100"
+                  }`;
+                }}
               >
                 {icon} {label}
               </NavLink>
