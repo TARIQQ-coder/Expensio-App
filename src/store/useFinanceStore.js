@@ -1,4 +1,3 @@
-// src/store/useFinanceStore.js
 import { create } from "zustand";
 import { db } from "../config/firebaseConfig";
 import {
@@ -13,6 +12,8 @@ import {
   orderBy,
   serverTimestamp,
   deleteField,
+  where,
+  Timestamp,
 } from "firebase/firestore";
 
 const useFinanceStore = create((set) => ({
@@ -172,13 +173,23 @@ const useFinanceStore = create((set) => ({
     }
   },
 
-  // 🔄 Subscribe to all finance data
+  // 🔄 Subscribe to finance data for a specific month
   subscribeFinance: (uid, yearMonth) => {
-    if (!uid) return;
+    if (!uid || !yearMonth) return;
 
-    // Expenses
+    // Calculate the start and end timestamps for the selected month
+    const [year, month] = yearMonth.split("-");
+    const startOfMonth = Timestamp.fromDate(new Date(year, month - 1, 1));
+    const endOfMonth = Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59, 999));
+
+    // Expenses (filtered by month)
     const expUnsub = onSnapshot(
-      query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc")),
+      query(
+        collection(db, "users", uid, "expenses"),
+        where("createdAt", ">=", startOfMonth),
+        where("createdAt", "<=", endOfMonth),
+        orderBy("createdAt", "asc")
+      ),
       (snapshot) => {
         set({
           expenses: snapshot.docs.map((doc) => ({
@@ -211,6 +222,13 @@ const useFinanceStore = create((set) => ({
             budgets: {
               ...state.budgets,
               [yearMonth]: snap.data(),
+            },
+          }));
+        } else {
+          set((state) => ({
+            budgets: {
+              ...state.budgets,
+              [yearMonth]: { total: 0, categories: {} },
             },
           }));
         }

@@ -1,10 +1,9 @@
-// src/components/Budget/SetBudgetModal.jsx
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import useFinanceStore from "../../store/useFinanceStore";
 import { useAuth } from "../../context/AuthContext";
 
-const SetBudgetModal = ({ onClose, editingBudget }) => {
+const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
   const { setCategoryBudget, setTotalBudget, budgets } = useFinanceStore();
   const { user } = useAuth();
 
@@ -13,7 +12,7 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
     amount: "",
     currency: "GHS",
     period: "Monthly",
-    startDate: "",
+    startDate: `${selectedMonth}-01`,
   });
   const [error, setError] = useState("");
 
@@ -24,7 +23,7 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
         category: editingBudget.category || "Food",
         amount: editingBudget.amount || "",
         currency: editingBudget.currency || "GHS",
-        period: editingBudget.period || "Monthly",
+        period: "Monthly",
         startDate: editingBudget.startDate
           ? new Date(
               editingBudget.startDate.seconds
@@ -33,10 +32,10 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
             )
               .toISOString()
               .split("T")[0]
-          : "",
+          : `${selectedMonth}-01`,
       });
     }
-  }, [editingBudget]);
+  }, [editingBudget, selectedMonth]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -50,9 +49,7 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
       return;
     }
 
-    const yearMonth = form.startDate
-      ? new Date(form.startDate).toISOString().slice(0, 7)
-      : "";
+    const yearMonth = selectedMonth; // Use selectedMonth directly
 
     const existingCategories = budgets[yearMonth]?.categories || {};
     const isDuplicate =
@@ -61,9 +58,7 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
       (!editingBudget || editingBudget.category !== form.category);
 
     if (isDuplicate) {
-      setError(
-        `A ${form.period.toLowerCase()} budget for ${form.category} already exists.`
-      );
+      setError(`A monthly budget for ${form.category} already exists for ${yearMonth}.`);
       return;
     }
 
@@ -77,8 +72,8 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
           form.category,
           Number(form.amount),
           form.currency,
-          form.period,
-          form.startDate
+          "Monthly",
+          new Date(form.startDate)
         );
       }
 
@@ -105,11 +100,23 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
           <h2 className="text-xl font-semibold text-white">
             {editingBudget
               ? isTotal
-                ? "Edit Total Monthly Budget"
-                : "Edit Category Budget"
+                ? `Edit Total Budget for ${new Date(selectedMonth + "-01").toLocaleString("default", {
+                    month: "long",
+                    year: "numeric",
+                  })}`
+                : `Edit ${form.category} Budget for ${new Date(selectedMonth + "-01").toLocaleString("default", {
+                    month: "long",
+                    year: "numeric",
+                  })}`
               : isTotal
-              ? "Set Total Monthly Budget"
-              : "Set New Category Budget"}
+              ? `Set Total Budget for ${new Date(selectedMonth + "-01").toLocaleString("default", {
+                  month: "long",
+                  year: "numeric",
+                })}`
+              : `Set ${form.category} Budget for ${new Date(selectedMonth + "-01").toLocaleString("default", {
+                  month: "long",
+                  year: "numeric",
+                })}`}
           </h2>
           <button
             onClick={onClose}
@@ -181,39 +188,6 @@ const SetBudgetModal = ({ onClose, editingBudget }) => {
               </select>
             </div>
           </div>
-
-          {/* Period (skip for Total) */}
-          {!isTotal && (
-            <div>
-              <label className="block mb-1 text-gray-300">Period*</label>
-              <select
-                name="period"
-                value={form.period}
-                onChange={handleChange}
-                required
-                className="w-full p-2 rounded bg-gray-800 text-white"
-              >
-                <option>Weekly</option>
-                <option>Monthly</option>
-                <option>Yearly</option>
-              </select>
-            </div>
-          )}
-
-          {/* Start Date (skip for Total) */}
-          {!isTotal && (
-            <div>
-              <label className="block mb-1 text-gray-300">Start Date*</label>
-              <input
-                type="date"
-                name="startDate"
-                value={form.startDate}
-                onChange={handleChange}
-                required
-                className="w-full p-2 rounded bg-gray-800 text-white outline-none"
-              />
-            </div>
-          )}
 
           {/* Save */}
           <div className="md:col-span-2 flex justify-end mt-6">

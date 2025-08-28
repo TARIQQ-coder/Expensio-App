@@ -65,15 +65,15 @@ const Home = () => {
   <ul className="space-y-2 text-gray-300 px-5">
     <li className="flex justify-between">
       <span>Total Income</span>{" "}
-      <span className="font-bold">€{totalIncome.toFixed(2)}</span>
+      <span className="font-bold">GHS {totalIncome.toFixed(2)}</span>
     </li>
     <li className="flex justify-between">
       <span>Total Expenses</span>{" "}
-      <span className="font-bold">€{totalExpenses.toFixed(2)}</span>
+      <span className="font-bold">GHS {totalExpenses.toFixed(2)}</span>
     </li>
     <li className="flex justify-between">
       <span>Remaining Budget</span>{" "}
-      <span className="font-bold">€{remainingBudget.toFixed(2)}</span>
+      <span className="font-bold">GHS {remainingBudget.toFixed(2)}</span>
     </li>
     <li className="flex justify-between">
       <span>Number of Expenses</span>{" "}

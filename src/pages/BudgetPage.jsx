@@ -78,7 +78,11 @@ const BudgetPage = () => {
   }, [categories, expenses, monthData.currency]);
 
   const handleOpenModal = (budget = null) => {
-    setEditingBudget(budget);
+    setEditingBudget({
+      ...budget,
+      startDate: budget ? budget.startDate : new Date(`${selectedMonth}-01`),
+      period: "Monthly", // Ensure period is always Monthly
+    });
     setIsModalOpen(true);
   };
 
@@ -135,6 +139,7 @@ const BudgetPage = () => {
         <SetBudgetModal
           onClose={handleCloseModal}
           editingBudget={editingBudget}
+          selectedMonth={selectedMonth} // Pass selectedMonth to the modal
         />
       )}
 
@@ -202,7 +207,7 @@ const BudgetPage = () => {
                   amount: totalMonthlyBudget,
                   currency: monthData.currency || "GHS",
                   period: "Monthly",
-                  startDate: new Date(),
+                  startDate: new Date(`${selectedMonth}-01`),
                 })
               }
               className="text-blue-400 hover:text-blue-300 cursor-pointer"
@@ -255,12 +260,14 @@ const BudgetPage = () => {
           <div>
             <span className="text-gray-300">Total Budget</span>
             <p className="font-bold text-xl">
-              GHS {totalMonthlyBudget.toFixed(2)}
+              {monthData.currency || "GHS"} {totalMonthlyBudget.toFixed(2)}
             </p>
           </div>
           <div>
             <span className="text-gray-300">Total Spent</span>
-            <p className="font-bold text-xl">GHS {totalExpenses.toFixed(2)}</p>
+            <p className="font-bold text-xl">
+              {monthData.currency || "GHS"} {totalExpenses.toFixed(2)}
+            </p>
           </div>
           <div>
             <span className="text-gray-300">Remaining Budget</span>
@@ -269,7 +276,7 @@ const BudgetPage = () => {
                 remainingMonthlyBudget < 0 ? "text-red-400" : "text-green-400"
               }`}
             >
-              GHS {remainingMonthlyBudget.toFixed(2)}
+              {monthData.currency || "GHS"} {remainingMonthlyBudget.toFixed(2)}
             </p>
           </div>
         </div>
@@ -316,7 +323,7 @@ const BudgetPage = () => {
                           amount: budget.budgetAmount,
                           currency: budget.currency,
                           period: "Monthly",
-                          startDate: new Date(),
+                          startDate: new Date(`${selectedMonth}-01`),
                         })
                       }
                       className="text-blue-400 hover:text-blue-300 cursor-pointer"
