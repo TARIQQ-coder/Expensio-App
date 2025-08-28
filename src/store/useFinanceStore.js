@@ -200,9 +200,14 @@ const useFinanceStore = create((set) => ({
       }
     );
 
-    // Income
+    // Income (filtered by month)
     const incUnsub = onSnapshot(
-      query(collection(db, "users", uid, "income"), orderBy("createdAt", "asc")),
+      query(
+        collection(db, "users", uid, "income"),
+        where("createdAt", ">=", startOfMonth),
+        where("createdAt", "<=", endOfMonth),
+        orderBy("createdAt", "asc")
+      ),
       (snapshot) => {
         set({
           income: snapshot.docs.map((doc) => ({
