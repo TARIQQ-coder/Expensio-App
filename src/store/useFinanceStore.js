@@ -71,6 +71,30 @@ const useFinanceStore = create((set) => ({
     }
   },
 
+  // ✏️ Update income
+  updateIncome: async (uid, incomeId, updatedIncome) => {
+    if (!uid || !incomeId) return;
+    try {
+      const incRef = doc(db, "users", uid, "income", incomeId);
+      await updateDoc(incRef, {
+        ...updatedIncome,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("🔥 Error updating income:", err);
+    }
+  },
+
+  // 🗑️ Delete income
+  deleteIncome: async (uid, incomeId) => {
+    if (!uid || !incomeId) return;
+    try {
+      await deleteDoc(doc(db, "users", uid, "income", incomeId));
+    } catch (err) {
+      console.error("🔥 Error deleting income:", err);
+    }
+  },
+
   // 🏦 Set category budget
   setCategoryBudget: async (
     uid,
@@ -173,52 +197,58 @@ const useFinanceStore = create((set) => ({
     }
   },
 
-  // 🔄 Subscribe to finance data for a specific month
+  // 🔄 Subscribe to finance data for a specific month (or all data if yearMonth is not provided)
   subscribeFinance: (uid, yearMonth) => {
-    if (!uid || !yearMonth) return;
+    if (!uid) return;
 
-    // Calculate the start and end timestamps for the selected month
-    const [year, month] = yearMonth.split("-");
-    const startOfMonth = Timestamp.fromDate(new Date(year, month - 1, 1));
-    const endOfMonth = Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59, 999));
+    // Calculate start and end timestamps for the selected month if yearMonth is provided
+    const [year, month] = yearMonth ? yearMonth.split("-") : [null, null];
+    const startOfMonth = yearMonth
+      ? Timestamp.fromDate(new Date(year, month - 1, 1))
+      : null;
+    const endOfMonth = yearMonth
+      ? Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59, 999))
+      : null;
 
-    // Expenses (filtered by month)
-    const expUnsub = onSnapshot(
-      query(
-        collection(db, "users", uid, "expenses"),
-        where("createdAt", ">=", startOfMonth),
-        where("createdAt", "<=", endOfMonth),
-        orderBy("createdAt", "asc")
-      ),
-      (snapshot) => {
-        set({
-          expenses: snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })),
-        });
-      }
-    );
+    // Expenses subscription
+    const expensesQuery = yearMonth
+      ? query(
+          collection(db, "users", uid, "expenses"),
+          where("createdAt", ">=", startOfMonth),
+          where("createdAt", "<=", endOfMonth),
+          orderBy("createdAt", "asc")
+        )
+      : query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc"));
 
-    // Income (filtered by month)
-    const incUnsub = onSnapshot(
-      query(
-        collection(db, "users", uid, "income"),
-        where("createdAt", ">=", startOfMonth),
-        where("createdAt", "<=", endOfMonth),
-        orderBy("createdAt", "asc")
-      ),
-      (snapshot) => {
-        set({
-          income: snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })),
-        });
-      }
-    );
+    const expUnsub = onSnapshot(expensesQuery, (snapshot) => {
+      set({
+        expenses: snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })),
+      });
+    });
 
-    // Budgets
+    // Income subscription
+    const incomeQuery = yearMonth
+      ? query(
+          collection(db, "users", uid, "income"),
+          where("createdAt", ">=", startOfMonth),
+          where("createdAt", "<=", endOfMonth),
+          orderBy("createdAt", "asc")
+        )
+      : query(collection(db, "users", uid, "income"), orderBy("createdAt", "asc"));
+
+    const incUnsub = onSnapshot(incomeQuery, (snapshot) => {
+      set({
+        income: snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })),
+      });
+    });
+
+    // Budgets subscription
     let budUnsub = null;
     if (yearMonth) {
       budUnsub = onSnapshot(doc(db, "users", uid, "budgets", yearMonth), (snap) => {

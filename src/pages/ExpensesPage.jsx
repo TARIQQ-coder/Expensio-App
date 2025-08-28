@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
+import { FaFilter } from "react-icons/fa";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewExpenseModal from "../components/modals/NewExpenseModal";
 import { showConfirmToast } from "../components/ConfirmToast";
-import {expenseIcons} from "../data/categoryIcons";
+import { expenseIcons } from "../data/categoryIcons";
 
 const ExpensesPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+  const [showMonthGrid, setShowMonthGrid] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(""); // Empty string for all expenses
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -24,16 +27,16 @@ const ExpensesPage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // 🔄 Subscribe to expenses in real-time
+  // Subscribe to expenses (all or filtered by selected month)
   useEffect(() => {
     if (user?.uid) {
-      const unsubscribe = subscribeFinance(user.uid);
-      return () => unsubscribe && unsubscribe(); // cleanup
+      const unsubscribe = subscribeFinance(user.uid, selectedMonth || undefined);
+      return () => unsubscribe && unsubscribe();
     }
-  }, [user, subscribeFinance]);
+  }, [user, selectedMonth, subscribeFinance]);
 
   const handleEdit = (expense) => {
-    setEditingExpense(expense); // store full object
+    setEditingExpense(expense);
     setShowModal(true);
   };
 
@@ -46,21 +49,72 @@ const ExpensesPage = () => {
     );
   };
 
+  // Generate months for the current year
+  const months = [
+    { value: "", label: "All Expenses" },
+    ...Array.from({ length: 12 }, (_, i) => {
+      const month = new Date(new Date().getFullYear(), i, 1);
+      return {
+        value: month.toISOString().slice(0, 7),
+        label: month.toLocaleString("default", { month: "short" }),
+      };
+    }),
+  ];
+
   return (
     <div className="p-6">
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6 border-b pb-2">
-        <h1 className="text-2xl font-bold text-gray-100">Expenses</h1>
-        <button
-          onClick={() => {
-            setEditingExpense(null); // reset for new expense
-            setShowModal(true);
-          }}
-          className="px-4 py-2 bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer"
-        >
-          + New Expense
-        </button>
+        <h1 className="text-2xl font-bold text-gray-100">
+          Expenses {selectedMonth ? `- ${new Date(selectedMonth + "-01").toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          })}` : ""}
+        </h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMonthGrid(!showMonthGrid)}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20"
+            title="Filter by month"
+          >
+            <FaFilter size={16} />
+            <span>{selectedMonth ? new Date(selectedMonth + "-01").toLocaleString("default", { month: "short" }) : "All"}</span>
+          </button>
+          <button
+            onClick={() => {
+              setEditingExpense(null);
+              setShowModal(true);
+            }}
+            className="px-4 py-2 bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer"
+          >
+            + New Expense
+          </button>
+        </div>
       </div>
+
+      {/* Month Picker Grid */}
+      {showMonthGrid && (
+        <div className="relative mb-6">
+          <div className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-3 gap-2">
+            {months.map((m) => (
+              <button
+                key={m.value || "all"}
+                onClick={() => {
+                  setSelectedMonth(m.value);
+                  setShowMonthGrid(false);
+                }}
+                className={`px-3 py-1 rounded ${
+                  selectedMonth === m.value
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white/10 text-gray-200 hover:bg-white/20"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Expenses Table */}
       <div className="overflow-x-auto">
@@ -84,8 +138,8 @@ const ExpensesPage = () => {
               </tr>
             ) : (
               expenses.map((expense, index) => {
-                const dateObj = expense.date
-                  ? new Date(expense.date.seconds * 1000)
+                const dateObj = expense.createdAt
+                  ? new Date(expense.createdAt.seconds * 1000)
                   : null;
 
                 const rowColor =
@@ -156,7 +210,7 @@ const ExpensesPage = () => {
       {showModal && (
         <NewExpenseModal
           onClose={() => setShowModal(false)}
-          editingExpense={editingExpense} // 👈 send down for pre-fill
+          editingExpense={editingExpense}
         />
       )}
     </div>

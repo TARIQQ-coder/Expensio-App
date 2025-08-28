@@ -1,21 +1,23 @@
-// src/pages/IncomePage.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
+import { FaFilter } from "react-icons/fa";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
-import NewIncomeModal from "../components/modals/NewIncomeModal"; // 👈 similar to NewExpenseModal
+import NewIncomeModal from "../components/modals/NewIncomeModal";
 import { showConfirmToast } from "../components/ConfirmToast";
-import {incomeIcons} from "../data/categoryIcons"; // ✅ reuse if you want categories for income too
+import { incomeIcons } from "../data/categoryIcons";
 
 const IncomePage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
+  const [showMonthGrid, setShowMonthGrid] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(""); // Empty string for all income
   const location = useLocation();
   const navigate = useNavigate();
 
   const { user } = useAuth();
-  const { income, subscribeFinance, deleteIncome } = useFinanceStore(); // 👈 we'll add deleteIncome
+  const { income, subscribeFinance, deleteIncome } = useFinanceStore();
 
   // Auto-open modal if redirected with state
   useEffect(() => {
@@ -25,13 +27,13 @@ const IncomePage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // 🔄 Subscribe to income in real-time
+  // Subscribe to income (all or filtered by selected month)
   useEffect(() => {
     if (user?.uid) {
-      const unsubscribe = subscribeFinance(user.uid);
+      const unsubscribe = subscribeFinance(user.uid, selectedMonth || undefined);
       return () => unsubscribe && unsubscribe();
     }
-  }, [user, subscribeFinance]);
+  }, [user, selectedMonth, subscribeFinance]);
 
   const handleEdit = (incomeItem) => {
     setEditingIncome(incomeItem);
@@ -44,21 +46,72 @@ const IncomePage = () => {
     });
   };
 
+  // Generate months for the current year
+  const months = [
+    { value: "", label: "All Income" },
+    ...Array.from({ length: 12 }, (_, i) => {
+      const month = new Date(new Date().getFullYear(), i, 1);
+      return {
+        value: month.toISOString().slice(0, 7),
+        label: month.toLocaleString("default", { month: "short" }),
+      };
+    }),
+  ];
+
   return (
     <div className="p-6">
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6 border-b pb-2">
-        <h1 className="text-2xl font-bold text-gray-100">Income</h1>
-        <button
-          onClick={() => {
-            setEditingIncome(null);
-            setShowModal(true);
-          }}
-          className="px-4 py-2 bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer"
-        >
-          + New Income
-        </button>
+        <h1 className="text-2xl font-bold text-gray-100">
+          Income {selectedMonth ? `- ${new Date(selectedMonth + "-01").toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          })}` : ""}
+        </h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMonthGrid(!showMonthGrid)}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20"
+            title="Filter by month"
+          >
+            <FaFilter size={16} />
+            <span>{selectedMonth ? new Date(selectedMonth + "-01").toLocaleString("default", { month: "short" }) : "All"}</span>
+          </button>
+          <button
+            onClick={() => {
+              setEditingIncome(null);
+              setShowModal(true);
+            }}
+            className="px-4 py-2 bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer"
+          >
+            + New Income
+          </button>
+        </div>
       </div>
+
+      {/* Month Picker Grid */}
+      {showMonthGrid && (
+        <div className="relative mb-6">
+          <div className="absolute z-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-3 gap-2">
+            {months.map((m) => (
+              <button
+                key={m.value || "all"}
+                onClick={() => {
+                  setSelectedMonth(m.value);
+                  setShowMonthGrid(false);
+                }}
+                className={`px-3 py-1 rounded ${
+                  selectedMonth === m.value
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white/10 text-gray-200 hover:bg-white/20"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Income Table */}
       <div className="overflow-x-auto">
@@ -82,7 +135,7 @@ const IncomePage = () => {
               </tr>
             ) : (
               income.map((inc, index) => {
-                const dateObj = inc.date ? new Date(inc.date.seconds * 1000) : null;
+                const dateObj = inc.createdAt ? new Date(inc.createdAt.seconds * 1000) : null;
                 const rowColor = index % 2 === 0 ? "bg-[#1b1b1b]" : "bg-[#28282a]";
                 const Icon = incomeIcons[inc.category] || incomeIcons["Other"];
 
