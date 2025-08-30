@@ -1,73 +1,66 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-  onAuthStateChanged,
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut as firebaseSignOut, 
   updateProfile,
-  sendPasswordResetEmail,
-  signOut as firebaseSignOut,
+  onAuthStateChanged
 } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
 
 const AuthContext = createContext();
+
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setLoading(false);
     });
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
-  // Update user profile (e.g., displayName)
+  const signIn = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signUp = async (email, password, displayName) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName });
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const updateUserProfile = async ({ displayName }) => {
-    if (!user) throw new Error("No user is signed in");
     try {
-      await updateProfile(user, { displayName });
-      setUser({ ...user, displayName });
+      await updateProfile(auth.currentUser, { displayName });
+      setUser({ ...auth.currentUser }); // Force state update
     } catch (error) {
-      console.error("🔥 Error updating profile:", error);
       throw error;
     }
   };
 
-  // Send password reset email
-  const sendPasswordReset = async (email) => {
-    if (!email) throw new Error("Email is required");
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (error) {
-      console.error("🔥 Error sending password reset email:", error);
-      throw error;
-    }
-  };
-
-  // Sign out
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      setUser(null);
     } catch (error) {
-      console.error("🔥 Error signing out:", error);
       throw error;
     }
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        updateUserProfile,
-        sendPasswordReset,
-        signOut,
-      }}
-    >
-      {children}
+    <AuthContext.Provider value={{ user, signIn, signUp, updateUserProfile, signOut, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

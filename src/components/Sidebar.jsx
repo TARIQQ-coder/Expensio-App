@@ -11,8 +11,10 @@ import {
   FaChartArea 
 } from "react-icons/fa";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
+import { useAuth } from "../context/AuthContext";
 
-const Sidebar = ({ user }) => {
+const Sidebar = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -37,7 +39,7 @@ const Sidebar = ({ user }) => {
         <div>
           <div className="flex flex-col items-center mb-10">
             <h2 className="text-white font-medium text-2xl uppercase tracking-wide">
-              {user?.displayName || user?.name || "Guest"}
+              {user?.displayName || "Guest"}
             </h2>
             <p className="text-gray-400 truncate max-w-[180px] text-center">
               {user?.email || "No email"}

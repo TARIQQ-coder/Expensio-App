@@ -6,7 +6,7 @@ import useFinanceStore from "../store/useFinanceStore";
 import { toast } from "react-toastify";
 
 const SettingsPage = () => {
-  const { user, updateUserProfile, sendPasswordReset, signOut } = useAuth();
+  const { user, updateUserProfile, signOut } = useAuth();
   const { settings, updateUserSettings, subscribeUserSettings } = useFinanceStore();
   const navigate = useNavigate();
 
@@ -57,16 +57,6 @@ const SettingsPage = () => {
     setIsLoading(false);
   };
 
-  // Handle password reset
-  const handlePasswordReset = async () => {
-    try {
-      await sendPasswordReset(user.email);
-      toast.success("Password reset email sent");
-    } catch (error) {
-      toast.error("Failed to send reset email: " + error.message);
-    }
-  };
-
   // Handle sign out
   const handleSignOut = async () => {
     try {
@@ -104,15 +94,6 @@ const SettingsPage = () => {
             {isLoading ? "Updating..." : "Update Profile"}
           </button>
         </form>
-        <div className="px-5 mt-4">
-          <button
-            onClick={handlePasswordReset}
-            disabled={isLoading}
-            className="text-blue-400 hover:text-blue-300"
-          >
-            Send Password Reset Email
-          </button>
-        </div>
       </div>
 
       {/* Currency Settings */}
