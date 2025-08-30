@@ -20,6 +20,7 @@ const useFinanceStore = create((set) => ({
   expenses: [],
   income: [],
   budgets: {}, // { "2025-08": { total: 1000, categories: { Food: 300, Rent: 500 }, currency: "GHS" } }
+  settings: { defaultCurrency: "GHS" }, // Default currency
 
   // ➕ Add expense
   addExpense: async (uid, expense) => {
@@ -85,7 +86,7 @@ const useFinanceStore = create((set) => ({
         updatedAt: serverTimestamp(),
       });
     } catch (err) {
-      console.error("�fire: Error updating income:", err);
+      console.error("🔥 Error updating income:", err);
       throw err;
     }
   },
@@ -306,6 +307,41 @@ const useFinanceStore = create((set) => ({
       incUnsub();
       if (budUnsub) budUnsub();
     };
+  },
+
+  // ⚙️ Update user settings (e.g., defaultCurrency)
+  updateUserSettings: async (uid, settings) => {
+    if (!uid) throw new Error("User ID is required");
+    try {
+      const settingsRef = doc(db, "users", uid, "settings", "preferences");
+      await setDoc(settingsRef, {
+        ...settings,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          ...settings,
+        },
+      }));
+    } catch (err) {
+      console.error("🔥 Error updating user settings:", err);
+      throw err;
+    }
+  },
+
+  // 🔄 Subscribe to user settings
+  subscribeUserSettings: (uid) => {
+    if (!uid) throw new Error("User ID is required");
+    const settingsRef = doc(db, "users", uid, "settings", "preferences");
+    const unsub = onSnapshot(settingsRef, (snap) => {
+      if (snap.exists()) {
+        set({ settings: snap.data() });
+      } else {
+        set({ settings: { defaultCurrency: "GHS" } }); // Default settings
+      }
+    });
+    return unsub;
   },
 }));
 export default useFinanceStore;
