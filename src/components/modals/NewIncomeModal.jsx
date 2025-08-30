@@ -1,11 +1,17 @@
-// src/components/modals/NewIncomeModal.jsx
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import useFinanceStore from "../../store/useFinanceStore";
 import { useAuth } from "../../context/AuthContext";
 
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
 const NewIncomeModal = ({ onClose, editingIncome }) => {
-  const { addIncome, updateIncome } = useFinanceStore();
+  const { addIncome, updateIncome, settings } = useFinanceStore();
   const { user } = useAuth();
 
   // State with default values
@@ -13,30 +19,24 @@ const NewIncomeModal = ({ onClose, editingIncome }) => {
     title: "",
     date: "",
     amount: "",
-    currency: "GHS",
+    currency: settings.defaultCurrency || "GHS",
     category: "Salary",
   });
 
-  // ✅ If editingIncome is provided, pre-fill the form
+  // Pre-fill form if editingIncome is provided
   useEffect(() => {
     if (editingIncome) {
       setForm({
         title: editingIncome.title || "",
-        date: editingIncome.date
-          ? new Date(
-              editingIncome.date.seconds
-                ? editingIncome.date.seconds * 1000 // Firestore timestamp
-                : editingIncome.date
-            )
-              .toISOString()
-              .split("T")[0]
+        date: editingIncome.createdAt
+          ? new Date(editingIncome.createdAt.seconds * 1000).toISOString().split("T")[0]
           : "",
         amount: editingIncome.amount || "",
-        currency: editingIncome.currency || "GHS",
+        currency: editingIncome.currency || settings.defaultCurrency || "GHS",
         category: editingIncome.category || "Salary",
       });
     }
-  }, [editingIncome]);
+  }, [editingIncome, settings.defaultCurrency]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -126,13 +126,15 @@ const NewIncomeModal = ({ onClose, editingIncome }) => {
           {/* Amount + Currency */}
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block mb-1 text-gray-300">Amount*</label>
+              <label className="block mb-1 text-gray-300">Amount ({currencySymbols[form.currency]})*</label>
               <input
                 type="number"
                 name="amount"
                 value={form.amount}
                 onChange={handleChange}
                 required
+                min="0"
+                step="0.01"
                 className="w-full p-2 rounded bg-gray-800 text-white outline-none"
               />
             </div>
@@ -144,9 +146,10 @@ const NewIncomeModal = ({ onClose, editingIncome }) => {
                 onChange={handleChange}
                 className="p-2 rounded bg-gray-800 text-white cursor-pointer"
               >
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GHS</option>
+                <option value="GHS">GHS (₵)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
               </select>
             </div>
           </div>
@@ -160,11 +163,11 @@ const NewIncomeModal = ({ onClose, editingIncome }) => {
               onChange={handleChange}
               className="w-full p-2 rounded bg-gray-800 text-white"
             >
-              <option>Salary</option>
-              <option>Business</option>
-              <option>Gift</option>
-              <option>Bonus</option>
-              <option>Other</option>
+              <option value="Salary">Salary</option>
+              <option value="Business">Business</option>
+              <option value="Gift">Gift</option>
+              <option value="Bonus">Bonus</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

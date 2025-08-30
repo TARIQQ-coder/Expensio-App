@@ -14,8 +14,15 @@ import { useAuth } from "../context/AuthContext";
 import SetBudgetModal from "../components/modals/SetBudgetModal";
 import { toast } from "react-toastify";
 
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
 const BudgetPage = () => {
-  const { budgets, expenses, subscribeFinance } = useFinanceStore();
+  const { budgets, expenses, subscribeFinance, settings } = useFinanceStore();
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
@@ -23,7 +30,7 @@ const BudgetPage = () => {
   const [showMonthGrid, setShowMonthGrid] = useState(false);
   const monthGridRef = useRef(null);
 
-  const monthData = budgets[selectedMonth] || { total: 0, categories: {} };
+  const monthData = budgets[selectedMonth] || { total: 0, categories: {}, currency: settings.defaultCurrency || "GHS" };
   const categories = monthData.categories || {};
 
   // Subscribe to finance data for the selected month
@@ -60,7 +67,7 @@ const BudgetPage = () => {
       categoryMap[category] = {
         budgetAmount: amount || 0,
         spent: 0,
-        currency: monthData.currency || "GHS",
+        currency: monthData.currency || settings.defaultCurrency || "GHS",
       };
     });
 
@@ -72,7 +79,7 @@ const BudgetPage = () => {
         categoryMap[category] = {
           budgetAmount: 0,
           spent: expense.amount || 0,
-          currency: monthData.currency || "GHS",
+          currency: monthData.currency || settings.defaultCurrency || "GHS",
         };
       }
     });
@@ -86,13 +93,13 @@ const BudgetPage = () => {
         currency: data.currency,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [categories, expenses, monthData.currency]);
+  }, [categories, expenses, monthData.currency, settings.defaultCurrency]);
 
   const handleOpenModal = (budget = null) => {
     setEditingBudget({
       ...budget,
       startDate: budget ? budget.startDate : new Date(`${selectedMonth}-01`),
-      period: "Monthly", // Ensure period is always Monthly
+      period: "Monthly",
     });
     setIsModalOpen(true);
   };
@@ -219,7 +226,7 @@ const BudgetPage = () => {
                 handleOpenModal({
                   category: "Total",
                   amount: totalMonthlyBudget,
-                  currency: monthData.currency || "GHS",
+                  currency: monthData.currency || settings.defaultCurrency || "GHS",
                   period: "Monthly",
                   startDate: new Date(`${selectedMonth}-01`),
                 })
@@ -274,13 +281,13 @@ const BudgetPage = () => {
           <div>
             <span className="text-gray-300">Total Budget</span>
             <p className="font-bold text-xl">
-              {monthData.currency || "GHS"} {totalMonthlyBudget.toFixed(2)}
+              {currencySymbols[monthData.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {totalMonthlyBudget.toFixed(2)}
             </p>
           </div>
           <div>
             <span className="text-gray-300">Total Spent</span>
             <p className="font-bold text-xl">
-              {monthData.currency || "GHS"} {totalExpenses.toFixed(2)}
+              {currencySymbols[monthData.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {totalExpenses.toFixed(2)}
             </p>
           </div>
           <div>
@@ -290,7 +297,7 @@ const BudgetPage = () => {
                 remainingMonthlyBudget < 0 ? "text-red-400" : "text-green-400"
               }`}
             >
-              {monthData.currency || "GHS"} {remainingMonthlyBudget.toFixed(2)}
+              {currencySymbols[monthData.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {remainingMonthlyBudget.toFixed(2)}
             </p>
           </div>
         </div>
@@ -317,17 +324,17 @@ const BudgetPage = () => {
                 <tr key={budget.name}>
                   <td>{budget.name}</td>
                   <td>
-                    {budget.currency} {budget.budgetAmount.toFixed(2)}
+                    {currencySymbols[budget.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {budget.budgetAmount.toFixed(2)}
                   </td>
                   <td>
-                    {budget.currency} {budget.spent.toFixed(2)}
+                    {currencySymbols[budget.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {budget.spent.toFixed(2)}
                   </td>
                   <td
                     className={
                       budget.remaining < 0 ? "text-red-400" : "text-green-400"
                     }
                   >
-                    {budget.currency} {budget.remaining.toFixed(2)}
+                    {currencySymbols[budget.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {budget.remaining.toFixed(2)}
                   </td>
                   <td className="flex gap-2">
                     <button
@@ -368,7 +375,7 @@ const BudgetPage = () => {
             <BarChart data={categoryBudgets}>
               <XAxis dataKey="name" stroke="#888" />
               <YAxis stroke="#888" />
-              <Tooltip />
+              <Tooltip formatter={(value, name) => [`${currencySymbols[monthData.currency] || currencySymbols[settings.defaultCurrency] || "₵"} ${value.toFixed(2)}`, name]} />
               <Bar dataKey="budgetAmount" fill="#4ade80" name="Budget" />
               <Bar dataKey="spent" fill="#a855f7" name="Spent" />
             </BarChart>

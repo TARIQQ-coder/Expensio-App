@@ -3,14 +3,21 @@ import { X } from "lucide-react";
 import useFinanceStore from "../../store/useFinanceStore";
 import { useAuth } from "../../context/AuthContext";
 
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
 const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
-  const { setCategoryBudget, setTotalBudget, budgets } = useFinanceStore();
+  const { setCategoryBudget, setTotalBudget, budgets, settings } = useFinanceStore();
   const { user } = useAuth();
 
   const [form, setForm] = useState({
     category: "Food",
     amount: "",
-    currency: "GHS",
+    currency: settings.defaultCurrency || "GHS",
     period: "Monthly",
     startDate: `${selectedMonth}-01`,
   });
@@ -22,7 +29,7 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
       setForm({
         category: editingBudget.category || "Food",
         amount: editingBudget.amount || "",
-        currency: editingBudget.currency || "GHS",
+        currency: editingBudget.currency || settings.defaultCurrency || "GHS",
         period: "Monthly",
         startDate: editingBudget.startDate
           ? new Date(
@@ -35,11 +42,11 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
           : `${selectedMonth}-01`,
       });
     }
-  }, [editingBudget, selectedMonth]);
+  }, [editingBudget, selectedMonth, settings.defaultCurrency]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setError(""); // clear error on change
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -49,7 +56,7 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
       return;
     }
 
-    const yearMonth = selectedMonth; // Use selectedMonth directly
+    const yearMonth = selectedMonth;
 
     const existingCategories = budgets[yearMonth]?.categories || {};
     const isDuplicate =
@@ -76,10 +83,9 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
           new Date(form.startDate)
         );
       }
-
-      onClose(); // close modal after save
+      onClose();
     } catch (err) {
-      console.error("🔥 Error saving budget:", err);
+      console.error("Error saving budget:", err);
       setError("Failed to save budget. Please try again.");
     }
   };
@@ -149,12 +155,12 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
                 required
                 className="w-full p-2 rounded bg-gray-800 text-white"
               >
-                <option>Food</option>
-                <option>Transportation</option>
-                <option>Housing</option>
-                <option>Entertainment</option>
-                <option>Utilities</option>
-                <option>Other</option>
+                <option value="Food">Food</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Housing">Housing</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Other">Other</option>
               </select>
             </div>
           )}
@@ -162,7 +168,7 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
           {/* Amount + Currency */}
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block mb-1 text-gray-300">Amount*</label>
+              <label className="block mb-1 text-gray-300">Amount ({currencySymbols[form.currency]})*</label>
               <input
                 type="number"
                 name="amount"
@@ -182,9 +188,10 @@ const SetBudgetModal = ({ onClose, editingBudget, selectedMonth }) => {
                 onChange={handleChange}
                 className="p-2 rounded bg-gray-800 text-white cursor-pointer"
               >
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GHS</option>
+                <option value="GHS">GHS (₵)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
               </select>
             </div>
           </div>

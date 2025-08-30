@@ -1,12 +1,19 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-import { FaFilter,FaPlus } from "react-icons/fa";
+import { FaFilter, FaPlus } from "react-icons/fa";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewIncomeModal from "../components/modals/NewIncomeModal";
 import { showConfirmToast } from "../components/ConfirmToast";
 import { incomeIcons } from "../data/categoryIcons";
+
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
 
 const IncomePage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -16,9 +23,8 @@ const IncomePage = () => {
   const monthGridRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-
   const { user } = useAuth();
-  const { income, subscribeFinance, deleteIncome } = useFinanceStore();
+  const { income, subscribeFinance, deleteIncome, settings } = useFinanceStore();
 
   // Auto-open modal if redirected with state
   useEffect(() => {
@@ -94,7 +100,7 @@ const IncomePage = () => {
               setEditingIncome(null);
               setShowModal(true);
             }}
-            className=" bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer font-semibold flex items-center gap-2 px-4 py-2 text-black"
+            className="bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer font-semibold flex items-center gap-2 px-4 py-2 text-black"
           >
             <FaPlus size={16} />
             <span> New Income</span>
@@ -151,7 +157,9 @@ const IncomePage = () => {
               </tr>
             ) : (
               income.map((inc, index) => {
-                const dateObj = inc.createdAt ? new Date(inc.createdAt.seconds * 1000) : null;
+                const dateObj = inc.date
+                  ? new Date(inc.date.seconds ? inc.date.seconds * 1000 : inc.date)
+                  : null;
                 const rowColor = index % 2 === 0 ? "bg-[#1b1b1b]" : "bg-[#28282a]";
                 const Icon = incomeIcons[inc.category] || incomeIcons["Other"];
 
@@ -172,7 +180,7 @@ const IncomePage = () => {
 
                     {/* AMOUNT */}
                     <td className="px-4 py-3 text-gray-100 font-semibold tracking-wide">
-                      {inc.currency || "₵"} {(inc.amount ?? 0).toFixed(2)}
+                      {currencySymbols[inc.currency] || currencySymbols[settings.defaultCurrency] || "₵"} {(inc.amount ?? 0).toFixed(2)}
                     </td>
 
                     {/* DATE */}

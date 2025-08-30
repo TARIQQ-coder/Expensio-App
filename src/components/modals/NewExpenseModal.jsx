@@ -1,11 +1,17 @@
-// src/components/modals/NewExpenseModal.jsx
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import useFinanceStore from "../../store/useFinanceStore";
 import { useAuth } from "../../context/AuthContext";
 
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
 const NewExpenseModal = ({ onClose, editingExpense }) => {
-  const { addExpense, updateExpense } = useFinanceStore();
+  const { addExpense, updateExpense, settings } = useFinanceStore();
   const { user } = useAuth();
 
   // State with default values
@@ -13,29 +19,24 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
     title: "",
     date: "",
     amount: "",
-    currency: "GHS",
+    currency: settings.defaultCurrency || "GHS",
     category: "Other",
   });
 
-  // ✅ If editingExpense is provided, pre-fill the form
+  // Pre-fill form if editingExpense is provided
   useEffect(() => {
-  if (editingExpense) {
-    setForm({
-      title: editingExpense.title || "",
-      // ✅ convert Firestore Timestamp → yyyy-mm-dd string
-      date: editingExpense.date
-        ? new Date(
-            editingExpense.date.seconds
-              ? editingExpense.date.seconds * 1000 // Firestore timestamp
-              : editingExpense.date                // already JS Date
-          ).toISOString().split("T")[0]
-        : "",
-      amount: editingExpense.amount || "",
-      currency: editingExpense.currency || "GHS",
-      category: editingExpense.category || "Other",
-    });
-  }
-}, [editingExpense]);
+    if (editingExpense) {
+      setForm({
+        title: editingExpense.title || "",
+        date: editingExpense.createdAt
+          ? new Date(editingExpense.createdAt.seconds * 1000).toISOString().split("T")[0]
+          : "",
+        amount: editingExpense.amount || "",
+        currency: editingExpense.currency || settings.defaultCurrency || "GHS",
+        category: editingExpense.category || "Other",
+      });
+    }
+  }, [editingExpense, settings.defaultCurrency]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -49,24 +50,24 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
     }
 
     try {
-    if (editingExpense) {
-      await updateExpense(user.uid, editingExpense.id, {
-        ...form,
-        amount: Number(form.amount),
-        date: new Date(form.date),   // ✅ save as Date object (timestamp)
-      });
-    } else {
-      await addExpense(user.uid, {
-        ...form,
-        amount: Number(form.amount),
-        date: new Date(form.date),   // ✅ save as Date object (timestamp)
-        createdAt: new Date(),       // ✅ still track when added
-      });
+      if (editingExpense) {
+        await updateExpense(user.uid, editingExpense.id, {
+          ...form,
+          amount: Number(form.amount),
+          date: new Date(form.date),
+        });
+      } else {
+        await addExpense(user.uid, {
+          ...form,
+          amount: Number(form.amount),
+          date: new Date(form.date),
+          createdAt: new Date(),
+        });
+      }
+      onClose();
+    } catch (error) {
+      console.error("Error saving expense:", error);
     }
-    onClose();
-  } catch (error) {
-    console.error("Error saving expense:", error);
-  }
   };
 
   return (
@@ -118,20 +119,22 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
               value={form.date}
               onChange={handleChange}
               required
-              className="w-full p-2 rounded bg-gray-800 text-white outline-none "
+              className="w-full p-2 rounded bg-gray-800 text-white outline-none"
             />
           </div>
 
           {/* Amount + Currency */}
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block mb-1 text-gray-300">Amount*</label>
+              <label className="block mb-1 text-gray-300">Amount ({currencySymbols[form.currency]})*</label>
               <input
                 type="number"
                 name="amount"
                 value={form.amount}
                 onChange={handleChange}
                 required
+                min="0"
+                step="0.01"
                 className="w-full p-2 rounded bg-gray-800 text-white outline-none"
               />
             </div>
@@ -143,9 +146,10 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
                 onChange={handleChange}
                 className="p-2 rounded bg-gray-800 text-white cursor-pointer"
               >
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GHS</option>
+                <option value="GHS">GHS (₵)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
               </select>
             </div>
           </div>
@@ -159,12 +163,12 @@ const NewExpenseModal = ({ onClose, editingExpense }) => {
               onChange={handleChange}
               className="w-full p-2 rounded bg-gray-800 text-white"
             >
-              <option>Food</option>
-              <option>Transport</option>
-              <option>Housing</option>
-              <option>Entertainment</option>
-              <option>Utilities</option>
-              <option>Other</option>
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="Housing">Housing</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

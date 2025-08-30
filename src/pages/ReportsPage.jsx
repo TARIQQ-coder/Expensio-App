@@ -19,8 +19,15 @@ import { useAuth } from "../context/AuthContext";
 
 const COLORS = ["#4ade80", "#a855f7", "#f472b6", "#38bdf8", "#fb923c", "#facc15"];
 
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
 const ReportsPage = () => {
-  const { expenses, income, budgets, subscribeFinance } = useFinanceStore();
+  const { expenses, income, budgets, subscribeFinance, settings } = useFinanceStore();
   const { user } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(""); // Empty string for all data
   const [showMonthGrid, setShowMonthGrid] = useState(false);
@@ -56,8 +63,8 @@ const ReportsPage = () => {
 
   const netSavings = totalIncome - totalExpenses;
   const totalBudget = selectedMonth ? budgets[selectedMonth]?.total || 0 : 0;
+  const currency = selectedMonth ? budgets[selectedMonth]?.currency || settings.defaultCurrency || "GHS" : settings.defaultCurrency || "GHS";
   const budgetUtilization = totalBudget > 0 ? (totalExpenses / totalBudget) * 100 : 0;
-  const currency = selectedMonth ? budgets[selectedMonth]?.currency || "₵" : "₵";
 
   // Group expenses by category
   const expenseByCategory = useMemo(() => {
@@ -83,8 +90,8 @@ const ReportsPage = () => {
   const expensesOverTime = useMemo(() => {
     const map = {};
     expenses.forEach((e) => {
-      const date = e.createdAt
-        ? new Date(e.createdAt.seconds * 1000).toLocaleDateString()
+      const date = e.date
+        ? new Date(e.date.seconds ? e.date.seconds * 1000 : e.date).toLocaleDateString()
         : "Unknown";
       map[date] = (map[date] || 0) + (e.amount || 0);
     });
@@ -158,23 +165,23 @@ const ReportsPage = () => {
         <ul className="space-y-2 text-gray-300 px-5">
           <li className="flex justify-between">
             <span>Total Income</span>
-            <span className="font-bold">{currency} {totalIncome.toFixed(2)}</span>
+            <span className="font-bold">{currencySymbols[currency]} {totalIncome.toFixed(2)}</span>
           </li>
           <li className="flex justify-between">
             <span>Total Expenses</span>
-            <span className="font-bold">{currency} {totalExpenses.toFixed(2)}</span>
+            <span className="font-bold">{currencySymbols[currency]} {totalExpenses.toFixed(2)}</span>
           </li>
           <li className="flex justify-between">
             <span>Net Savings</span>
             <span className={`font-bold ${netSavings < 0 ? "text-red-400" : "text-green-400"}`}>
-              {currency} {netSavings.toFixed(2)}
+              {currencySymbols[currency]} {netSavings.toFixed(2)}
             </span>
           </li>
           {selectedMonth && (
             <>
               <li className="flex justify-between">
                 <span>Total Budget</span>
-                <span className="font-bold">{currency} {totalBudget.toFixed(2)}</span>
+                <span className="font-bold">{currencySymbols[currency]} {totalBudget.toFixed(2)}</span>
               </li>
               <li className="flex justify-between">
                 <span>Budget Utilization</span>
@@ -210,7 +217,7 @@ const ReportsPage = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `${currency} ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => `${currencySymbols[currency]} ${value.toFixed(2)}`} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -226,7 +233,7 @@ const ReportsPage = () => {
               <BarChart data={incomeByCategory}>
                 <XAxis dataKey="name" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip formatter={(value) => `${currency} ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => `${currencySymbols[currency]} ${value.toFixed(2)}`} />
                 <Bar dataKey="value" fill="#4ade80" />
               </BarChart>
             </ResponsiveContainer>
@@ -244,7 +251,7 @@ const ReportsPage = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="date" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip formatter={(value) => `${currency} ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => `${currencySymbols[currency]} ${value.toFixed(2)}`} />
                 <Line
                   type="monotone"
                   dataKey="amount"

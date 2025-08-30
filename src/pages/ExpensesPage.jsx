@@ -1,12 +1,19 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-import { FaFilter,FaPlus } from "react-icons/fa";
+import { FaFilter, FaPlus } from "react-icons/fa";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewExpenseModal from "../components/modals/NewExpenseModal";
 import { showConfirmToast } from "../components/ConfirmToast";
 import { expenseIcons } from "../data/categoryIcons";
+
+const currencySymbols = {
+  GHS: "₵",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
 
 const ExpensesPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -18,7 +25,7 @@ const ExpensesPage = () => {
   const navigate = useNavigate();
 
   const { user } = useAuth();
-  const { expenses, subscribeFinance, deleteExpense } = useFinanceStore();
+  const { expenses, subscribeFinance, deleteExpense, settings } = useFinanceStore();
 
   // Auto-open modal if redirected with state
   useEffect(() => {
@@ -154,8 +161,8 @@ const ExpensesPage = () => {
               </tr>
             ) : (
               expenses.map((expense, index) => {
-                const dateObj = expense.createdAt
-                  ? new Date(expense.createdAt.seconds * 1000)
+                const dateObj = expense.date
+                  ? new Date(expense.date.seconds ? expense.date.seconds * 1000 : expense.date)
                   : null;
 
                 const rowColor =
@@ -190,7 +197,7 @@ const ExpensesPage = () => {
 
                     {/* AMOUNT */}
                     <td className="px-4 py-3 text-gray-100 font-semibold tracking-wide">
-                      {expense.currency || "₵"}{" "}
+                      {currencySymbols[expense.currency] || currencySymbols[settings.defaultCurrency] || "₵"}{" "}
                       {(expense.amount ?? 0).toFixed(2)}
                     </td>
 
