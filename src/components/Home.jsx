@@ -207,7 +207,7 @@ const Home = () => {
           {/* Add Expense */}
           <button
             onClick={() => navigate("/dashboard/expenses", { state: { openModal: true } })}
-            className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg"
+            className="flex flex-col items-center bg-pink-600/20 hover:bg-pink-600/30 p-4 rounded-lg cursor-pointer"
           >
             <FaMoneyBill size={24} className="mb-2" /> + Add Expense
           </button>
@@ -215,7 +215,7 @@ const Home = () => {
           {/* Add Income */}
           <button
             onClick={() => navigate("/dashboard/income", { state: { openModal: true } })}
-            className="flex flex-col items-center bg-green-600/20 hover:bg-green-600/30 p-4 rounded-lg"
+            className="flex flex-col items-center bg-green-600/20 hover:bg-green-600/30 p-4 rounded-lg cursor-pointer"
           >
             <FaWallet size={24} className="mb-2" /> + Add Income
           </button>
@@ -223,7 +223,7 @@ const Home = () => {
           {/* View Budget */}
           <button
             onClick={() => navigate("/dashboard/budget")}
-            className="flex flex-col items-center bg-blue-600/20 hover:bg-blue-600/30 p-4 rounded-lg"
+            className="flex flex-col items-center bg-blue-600/20 hover:bg-blue-600/30 p-4 rounded-lg cursor-pointer"
           >
             <FaChartPie size={24} className="mb-2" />
             <span className="flex items-center gap-2">
@@ -234,7 +234,7 @@ const Home = () => {
           {/* View Reports */}
           <button
             onClick={() => navigate("/dashboard/reports")}
-            className="flex flex-col items-center bg-purple-600/20 hover:bg-purple-600/30 p-4 rounded-lg"
+            className="flex flex-col items-center bg-purple-600/20 hover:bg-purple-600/30 p-4 rounded-lg cursor-pointer"
           >
             <FaChartBar size={24} className="mb-2" />
             <span className="flex items-center gap-2">

@@ -192,13 +192,13 @@ const IncomePage = () => {
                     <td className="px-4 pt-5 flex gap-4">
                       <button
                         onClick={() => handleEdit(inc)}
-                        className="text-blue-400 hover:text-blue-600"
+                        className="text-blue-400 hover:text-blue-600 cursor-pointer"
                       >
                         <Pencil className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(inc.id)}
-                        className="text-red-400 hover:text-red-600"
+                        className="text-red-400 hover:text-red-600 cursor-pointer"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
