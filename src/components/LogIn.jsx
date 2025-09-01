@@ -1,46 +1,57 @@
-// LogIn.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import Expensio1 from "../assets/Expensio1.jpg";
 import Expensio2 from "../assets/Expensio2.jpg";
-import Expensio3 from "../assets/Expensio3.jpg";
-import Expensio4 from "../assets/Expensio4.jpg";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const userSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: "Email is required" })
+    .email({ message: "Invalid email address" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters long" }),
+});
 
 const LogIn = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(userSchema),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setLoading(true);
-
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      await signInWithEmailAndPassword(auth, data.email, data.password);
       navigate("/dashboard");
     } catch (error) {
       console.error("Error logging in:", error);
       let message = "Something went wrong. Please try again.";
 
-      if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
-    message = "Invalid email or password. Please try again!";
-  } else if (error.code === "auth/too-many-requests") {
-    message = "Too many failed attempts. Please wait a while before trying again.";
-  } else if (error.code === "auth/network-request-failed") {
-    message = "Network error. Please check your internet connection.";
-  }
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found"
+      ) {
+        message = "Invalid email or password. Please try again!";
+      } else if (error.code === "auth/too-many-requests") {
+        message =
+          "Too many failed attempts. Please wait a while before trying again.";
+      } else if (error.code === "auth/network-request-failed") {
+        message = "Network error. Please check your internet connection.";
+      }
 
       toast.error(message, {
         position: "top-center",
@@ -51,12 +62,14 @@ const LogIn = () => {
         draggable: true,
         toastClassName: "custom-toast",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div
-      className="flex justify-center items-center h-screen bg-black bg-cover bg-center "
+      className="flex justify-center items-center h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: `url(${Expensio2})` }}
     >
       <div>
@@ -71,32 +84,45 @@ const LogIn = () => {
 
         {/* Login Form */}
         <div className="bg-black/10 p-8 rounded-2xl shadow-lg w-96 backdrop-blur-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
-            />
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <input
+                type="email"
+                {...register("email")}
+                placeholder="Enter email"
+                className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
-            />
+            <div>
+              <input
+                type="password"
+                {...register("password")}
+                placeholder="Enter password"
+                className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
             <button
               type="submit"
-              className="w-full bg-teal-400 text-black py-3 rounded-lg font-semibold hover:bg-teal-500 transition text-lg cursor-pointer"
+              disabled={loading}
+              className={`w-full py-3 rounded-lg font-semibold text-lg cursor-pointer ${
+                loading
+                  ? "bg-teal-300 text-gray-600 cursor-not-allowed"
+                  : "bg-teal-400 text-black hover:bg-teal-500 transition"
+              }`}
             >
-              Log In
+              {loading ? "Logging In..." : "Log In"}
             </button>
           </form>
 
