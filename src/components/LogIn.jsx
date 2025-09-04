@@ -4,8 +4,7 @@ import Expensio2 from "../assets/Expensio2.jpg";
 import { TbArrowsTransferUpDown } from "react-icons/tb";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,7 +59,7 @@ const LogIn = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        toastClassName: "custom-toast",
+        toastClassName: "bg-gray-900 text-white font-medium rounded-lg shadow-lg",
       });
     } finally {
       setLoading(false);
@@ -91,6 +90,7 @@ const LogIn = () => {
                 {...register("email")}
                 placeholder="Enter email"
                 className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+                aria-invalid={errors.email ? "true" : "false"}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">
@@ -105,6 +105,7 @@ const LogIn = () => {
                 {...register("password")}
                 placeholder="Enter password"
                 className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+                aria-invalid={errors.password ? "true" : "false"}
               />
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">
@@ -121,6 +122,7 @@ const LogIn = () => {
                   ? "bg-teal-300 text-gray-600 cursor-not-allowed"
                   : "bg-teal-400 text-black hover:bg-teal-500 transition"
               }`}
+              aria-label="Log in"
             >
               {loading ? "Logging In..." : "Log In"}
             </button>
@@ -135,18 +137,6 @@ const LogIn = () => {
           </p>
         </div>
       </div>
-
-      {/* Toast Notification Container */}
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        toastClassName="bg-gray-900 text-white font-medium rounded-lg shadow-lg"
-        className="custom-toast-container"
-      />
     </div>
   );
 };

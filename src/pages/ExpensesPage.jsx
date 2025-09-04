@@ -5,6 +5,7 @@ import { FaFilter, FaPlus } from "react-icons/fa";
 import useFinanceStore from "../store/useFinanceStore";
 import { useAuth } from "../context/AuthContext";
 import NewExpenseModal from "../components/modals/NewExpenseModal";
+import { toast } from "react-toastify";
 import { showConfirmToast } from "../components/ConfirmToast";
 import { expenseIcons } from "../data/categoryIcons";
 
@@ -19,7 +20,8 @@ const ExpensesPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [showMonthGrid, setShowMonthGrid] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(""); // Empty string for all expenses
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [deletingIds, setDeletingIds] = useState([]);
   const monthGridRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ const ExpensesPage = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  // Subscribe to expenses (all or filtered by selected month)
+  // Subscribe to expenses
   useEffect(() => {
     if (user?.uid) {
       const unsubscribe = subscribeFinance(user.uid, selectedMonth || undefined);
@@ -59,13 +61,57 @@ const ExpensesPage = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (expenseId) => {
-    showConfirmToast(
-      "Are you sure you want to delete this expense?",
-      async () => {
-        await deleteExpense(user.uid, expenseId);
-      }
-    );
+  const handleDelete = async (expenseId) => {
+    console.log("Delete button clicked for expenseId:", expenseId); // Debug log
+    if (!user?.uid) {
+      toast.error("User not authenticated. Please log in.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    setDeletingIds((prev) => [...prev, expenseId]);
+    try {
+      showConfirmToast(
+        "Are you sure you want to delete this expense?",
+        async () => {
+          try {
+            await deleteExpense(user.uid, expenseId);
+            toast.success("Expense deleted successfully!", {
+              position: "top-center",
+              autoClose: 2000,
+            });
+          } catch (error) {
+            console.error("Error deleting expense:", error);
+            let message = "Failed to delete expense. Please try again.";
+            if (error.code === "permission-denied") {
+              message = "You don't have permission to delete this expense.";
+            } else if (error.code === "not-found") {
+              message = "Expense not found.";
+            } else if (error.code === "network-request-failed") {
+              message = "Network error. Please check your connection.";
+            }
+            toast.error(message, {
+              position: "top-center",
+              autoClose: 3000,
+            });
+          } finally {
+            setDeletingIds((prev) => prev.filter((id) => id !== expenseId));
+          }
+        },
+        () => {
+          setDeletingIds((prev) => prev.filter((id) => id !== expenseId));
+        }
+      );
+    } catch (error) {
+      console.error("Error showing confirm toast:", error);
+      toast.error("Failed to show confirmation dialog. Please try again.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      setDeletingIds((prev) => prev.filter((id) => id !== expenseId));
+    }
   };
 
   // Generate months for the current year
@@ -85,10 +131,13 @@ const ExpensesPage = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6 border-b pb-2">
         <h1 className="text-2xl font-bold text-gray-100">
-          Expenses {selectedMonth ? `- ${new Date(selectedMonth + "-01").toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}` : ""}
+          Expenses{" "}
+          {selectedMonth
+            ? `- ${new Date(selectedMonth + "-01").toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              })}`
+            : ""}
         </h1>
         <div className="flex items-center gap-2">
           <button
@@ -97,7 +146,13 @@ const ExpensesPage = () => {
             title="Filter by month"
           >
             <FaFilter size={16} />
-            <span>{selectedMonth ? new Date(selectedMonth + "-01").toLocaleString("default", { month: "short" }) : "All"}</span>
+            <span>
+              {selectedMonth
+                ? new Date(selectedMonth + "-01").toLocaleString("default", {
+                    month: "short",
+                  })
+                : "All"}
+            </span>
           </button>
           <button
             onClick={() => {
@@ -107,7 +162,7 @@ const ExpensesPage = () => {
             className="bg-[#0acfbf] rounded-lg hover:bg-[#0cfce8] transition cursor-pointer font-semibold flex items-center gap-2 px-4 py-2 text-black"
           >
             <FaPlus size={16} />
-            <span> New Expense</span>
+            <span>New Expense</span>
           </button>
         </div>
       </div>
@@ -162,13 +217,16 @@ const ExpensesPage = () => {
             ) : (
               expenses.map((expense, index) => {
                 const dateObj = expense.date
-                  ? new Date(expense.date.seconds ? expense.date.seconds * 1000 : expense.date)
+                  ? new Date(
+                      expense.date.seconds
+                        ? expense.date.seconds * 1000
+                        : expense.date
+                    )
                   : null;
 
                 const rowColor =
                   index % 2 === 0 ? "bg-[#1b1b1b]" : "bg-[#28282a]";
 
-                // Get the icon component for the expense category
                 const Icon =
                   expenseIcons[expense.category] || expenseIcons["Other"];
 
@@ -177,7 +235,6 @@ const ExpensesPage = () => {
                     key={expense.id}
                     className={`${rowColor} rounded-xl shadow`}
                   >
-                    {/* DETAILS with Category Icon */}
                     <td className="px-4 py-4 text-gray-100 font-medium max-w-[300px]">
                       <div className="flex items-center gap-2 truncate">
                         <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#124241]">
@@ -189,34 +246,35 @@ const ExpensesPage = () => {
                         <span className="truncate">{expense.title}</span>
                       </div>
                     </td>
-
-                    {/* CATEGORY */}
                     <td className="px-4 py-3 text-gray-300">
                       {expense.category || "—"}
                     </td>
-
-                    {/* AMOUNT */}
                     <td className="px-4 py-3 text-gray-100 font-semibold tracking-wide">
-                      {currencySymbols[expense.currency] || currencySymbols[settings.defaultCurrency] || "₵"}{" "}
+                      {currencySymbols[expense.currency] ||
+                        currencySymbols[settings.defaultCurrency] ||
+                        "₵"}{" "}
                       {(expense.amount ?? 0).toFixed(2)}
                     </td>
-
-                    {/* DATE */}
                     <td className="px-4 py-3 text-gray-400">
                       {dateObj ? dateObj.toLocaleDateString() : "—"}
                     </td>
-
-                    {/* ACTIONS */}
                     <td className="px-4 pt-5 flex gap-4">
                       <button
                         onClick={() => handleEdit(expense)}
                         className="text-blue-400 hover:text-blue-600 cursor-pointer"
+                        aria-label="Edit expense"
                       >
                         <Pencil className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense.id)}
-                        className="text-red-400 hover:text-red-600 cursor-pointer"
+                        disabled={deletingIds.includes(expense.id)}
+                        className={`${
+                          deletingIds.includes(expense.id)
+                            ? "text-gray-600 cursor-not-allowed"
+                            : "text-red-400 hover:text-red-600 cursor-pointer"
+                        }`}
+                        aria-label="Delete expense"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -229,7 +287,7 @@ const ExpensesPage = () => {
         </table>
       </div>
 
-      {/* New Expense Modal (supports editing) */}
+      {/* New Expense Modal */}
       {showModal && (
         <NewExpenseModal
           onClose={() => setShowModal(false)}

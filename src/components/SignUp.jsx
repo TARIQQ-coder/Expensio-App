@@ -5,8 +5,7 @@ import { TbArrowsTransferUpDown } from "react-icons/tb";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../config/firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -88,7 +87,7 @@ const SignUp = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        toastClassName: "custom-toast",
+        toastClassName: "bg-gray-900 text-white font-medium rounded-lg shadow-lg",
       });
     } finally {
       setLoading(false);
@@ -119,6 +118,7 @@ const SignUp = () => {
                 {...register("displayName")}
                 placeholder="Enter name"
                 className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+                aria-invalid={errors.displayName ? "true" : "false"}
               />
               {errors.displayName && (
                 <p className="text-red-500 text-sm mt-1">
@@ -133,6 +133,7 @@ const SignUp = () => {
                 {...register("email")}
                 placeholder="Enter email"
                 className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+                aria-invalid={errors.email ? "true" : "false"}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">
@@ -147,6 +148,7 @@ const SignUp = () => {
                 {...register("password")}
                 placeholder="Enter password"
                 className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+                aria-invalid={errors.password ? "true" : "false"}
               />
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">
@@ -161,6 +163,7 @@ const SignUp = () => {
                 {...register("confirmPassword")}
                 placeholder="Confirm password"
                 className="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none"
+                aria-invalid={errors.confirmPassword ? "true" : "false"}
               />
               {errors.confirmPassword && (
                 <p className="text-red-500 text-sm mt-1">
@@ -177,6 +180,7 @@ const SignUp = () => {
                   ? "bg-teal-300 text-gray-600 cursor-not-allowed"
                   : "bg-teal-400 text-black hover:bg-teal-500 transition"
               }`}
+              aria-label="Sign up"
             >
               {loading ? "Signing Up..." : "Sign Up"}
             </button>
@@ -191,18 +195,6 @@ const SignUp = () => {
           </p>
         </div>
       </div>
-
-      {/* Toast Notification Container */}
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        toastClassName="bg-gray-900 text-white font-medium rounded-lg shadow-lg"
-        className="custom-toast-container"
-      />
     </div>
   );
 };
