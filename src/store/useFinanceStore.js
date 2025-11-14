@@ -20,20 +20,23 @@ import {
 const useFinanceStore = create((set, get) => ({
   expenses: [],
   income: [],
-  budgets: {}, // { "2025-08": { total: 1000, categories: { Food: 300, Rent: 500 }, currency: "GHS" } }
-  settings: { defaultCurrency: "GHS" }, // Default currency
+  budgets: {}, // { "2025-08": { total: 1000, categories: { Food: 300 }, currency: "GHS" } }
+  settings: { defaultCurrency: "GHS" },
 
   // ➕ Add expense
   addExpense: async (uid, expense) => {
     if (!uid) throw new Error("User ID is required");
+    if (!expense.date) throw new Error("Expense date is required");
+
     try {
       await addDoc(collection(db, "users", uid, "expenses"), {
         ...expense,
-        currency: expense.currency || get().settings.defaultCurrency, // Use defaultCurrency if not provided
-        createdAt: serverTimestamp(),
+        date: Timestamp.fromDate(new Date(expense.date)), // <-- USER DATE
+        currency: expense.currency || get().settings.defaultCurrency,
+        createdAt: serverTimestamp(), // audit only
       });
     } catch (err) {
-      console.error("🔥 Error adding expense:", err);
+      console.error("Error adding expense:", err);
       throw err;
     }
   },
@@ -41,15 +44,23 @@ const useFinanceStore = create((set, get) => ({
   // ✏️ Update expense
   updateExpense: async (uid, expenseId, updatedExpense) => {
     if (!uid || !expenseId) throw new Error("User ID and expense ID are required");
+
     try {
       const expRef = doc(db, "users", uid, "expenses", expenseId);
-      await updateDoc(expRef, {
+      const updateData = {
         ...updatedExpense,
-        currency: updatedExpense.currency || get().settings.defaultCurrency, // Use defaultCurrency if not provided
+        currency: updatedExpense.currency || get().settings.defaultCurrency,
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      // Only update date if provided (and convert to Timestamp)
+      if (updatedExpense.date) {
+        updateData.date = Timestamp.fromDate(new Date(updatedExpense.date));
+      }
+
+      await updateDoc(expRef, updateData);
     } catch (err) {
-      console.error("🔥 Error updating expense:", err);
+      console.error("Error updating expense:", err);
       throw err;
     }
   },
@@ -60,7 +71,7 @@ const useFinanceStore = create((set, get) => ({
     try {
       await deleteDoc(doc(db, "users", uid, "expenses", expenseId));
     } catch (err) {
-      console.error("🔥 Error deleting expense:", err);
+      console.error("Error deleting expense:", err);
       throw err;
     }
   },
@@ -68,14 +79,17 @@ const useFinanceStore = create((set, get) => ({
   // ➕ Add income
   addIncome: async (uid, income) => {
     if (!uid) throw new Error("User ID is required");
+    if (!income.date) throw new Error("Income date is required");
+
     try {
       await addDoc(collection(db, "users", uid, "income"), {
         ...income,
-        currency: income.currency || get().settings.defaultCurrency, // Use defaultCurrency if not provided
+        date: Timestamp.fromDate(new Date(income.date)), // <-- USER DATE
+        currency: income.currency || get().settings.defaultCurrency,
         createdAt: serverTimestamp(),
       });
     } catch (err) {
-      console.error("🔥 Error adding income:", err);
+      console.error("Error adding income:", err);
       throw err;
     }
   },
@@ -83,15 +97,22 @@ const useFinanceStore = create((set, get) => ({
   // ✏️ Update income
   updateIncome: async (uid, incomeId, updatedIncome) => {
     if (!uid || !incomeId) throw new Error("User ID and income ID are required");
+
     try {
       const incRef = doc(db, "users", uid, "income", incomeId);
-      await updateDoc(incRef, {
+      const updateData = {
         ...updatedIncome,
-        currency: updatedIncome.currency || get().settings.defaultCurrency, // Use defaultCurrency if not provided
+        currency: updatedIncome.currency || get().settings.defaultCurrency,
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      if (updatedIncome.date) {
+        updateData.date = Timestamp.fromDate(new Date(updatedIncome.date));
+      }
+
+      await updateDoc(incRef, updateData);
     } catch (err) {
-      console.error("🔥 Error updating income:", err);
+      console.error("Error updating income:", err);
       throw err;
     }
   },
@@ -102,7 +123,7 @@ const useFinanceStore = create((set, get) => ({
     try {
       await deleteDoc(doc(db, "users", uid, "income", incomeId));
     } catch (err) {
-      console.error("🔥 Error deleting income:", err);
+      console.error("Error deleting income:", err);
       throw err;
     }
   },
@@ -124,7 +145,7 @@ const useFinanceStore = create((set, get) => ({
         budgetRef,
         {
           categories: { [category]: amount },
-          currency: currency || get().settings.defaultCurrency, // Use defaultCurrency if not provided
+          currency: currency || get().settings.defaultCurrency,
           period,
           startDate: Timestamp.fromDate(new Date(startDate)),
           updatedAt: serverTimestamp(),
@@ -148,7 +169,7 @@ const useFinanceStore = create((set, get) => ({
         },
       }));
     } catch (err) {
-      console.error("🔥 Error setting category budget:", err);
+      console.error("Error setting category budget:", err);
       throw err;
     }
   },
@@ -162,7 +183,7 @@ const useFinanceStore = create((set, get) => ({
         budgetRef,
         {
           total: amount,
-          currency: currency || get().settings.defaultCurrency, // Use defaultCurrency if not provided
+          currency: currency || get().settings.defaultCurrency,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -179,7 +200,7 @@ const useFinanceStore = create((set, get) => ({
         },
       }));
     } catch (err) {
-      console.error("🔥 Error setting total budget:", err);
+      console.error("Error setting total budget:", err);
       throw err;
     }
   },
@@ -200,12 +221,12 @@ const useFinanceStore = create((set, get) => ({
         return {
           budgets: {
             ...state.budgets,
-            [yearMonth]: rest,
+            [yearMonth]: Object.keys(rest).length > 0 ? rest : delete state.budgets[yearMonth],
           },
         };
       });
     } catch (err) {
-      console.error("🔥 Error removing total budget:", err);
+      console.error("Error removing total budget:", err);
       throw err;
     }
   },
@@ -223,18 +244,20 @@ const useFinanceStore = create((set, get) => ({
       set((state) => {
         const existing = state.budgets[yearMonth]?.categories || {};
         const { [category]: _, ...rest } = existing;
+        const newCategories = Object.keys(rest).length > 0 ? rest : deleteField();
+
         return {
           budgets: {
             ...state.budgets,
             [yearMonth]: {
               ...state.budgets[yearMonth],
-              categories: rest,
+              categories: newCategories === deleteField() ? {} : newCategories,
             },
           },
         };
       });
     } catch (err) {
-      console.error("🔥 Error removing category budget:", err);
+      console.error("Error removing category budget:", err);
       throw err;
     }
   },
@@ -266,7 +289,7 @@ const useFinanceStore = create((set, get) => ({
         return { budgets: updatedBudgets };
       });
     } catch (err) {
-      console.error("🔥 Error updating budgets currency:", err);
+      console.error("Error updating budgets currency:", err);
       throw err;
     }
   },
@@ -275,7 +298,6 @@ const useFinanceStore = create((set, get) => ({
   updateAllExpensesAndIncomeCurrency: async (uid, newCurrency) => {
     if (!uid) throw new Error("User ID is required");
     try {
-      // Update expenses
       const expensesRef = collection(db, "users", uid, "expenses");
       const expensesSnapshot = await getDocs(expensesRef);
       const expensePromises = expensesSnapshot.docs.map(async (expenseDoc) => {
@@ -286,7 +308,6 @@ const useFinanceStore = create((set, get) => ({
         });
       });
 
-      // Update income
       const incomeRef = collection(db, "users", uid, "income");
       const incomeSnapshot = await getDocs(incomeRef);
       const incomePromises = incomeSnapshot.docs.map(async (incomeDoc) => {
@@ -299,7 +320,6 @@ const useFinanceStore = create((set, get) => ({
 
       await Promise.all([...expensePromises, ...incomePromises]);
 
-      // Update local state
       set((state) => ({
         expenses: state.expenses.map((expense) => ({
           ...expense,
@@ -311,7 +331,7 @@ const useFinanceStore = create((set, get) => ({
         })),
       }));
     } catch (err) {
-      console.error("🔥 Error updating expenses and income currency:", err);
+      console.error("Error updating expenses and income currency:", err);
       throw err;
     }
   },
@@ -319,100 +339,146 @@ const useFinanceStore = create((set, get) => ({
   // 🔄 Subscribe to finance data for a specific month (or all data if yearMonth is not provided)
   subscribeFinance: (uid, yearMonth) => {
     if (!uid) throw new Error("User ID is required");
-    const [year, month] = yearMonth ? yearMonth.split("-") : [null, null];
-    const startOfMonth = yearMonth
-      ? Timestamp.fromDate(new Date(year, month - 1, 1))
-      : null;
-    const endOfMonth = yearMonth
-      ? Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59, 999))
-      : null;
 
-    const expensesQuery = yearMonth
-      ? query(
-          collection(db, "users", uid, "expenses"),
-          where("createdAt", ">=", startOfMonth),
-          where("createdAt", "<=", endOfMonth),
-          orderBy("createdAt", "asc")
-        )
-      : query(collection(db, "users", uid, "expenses"), orderBy("createdAt", "asc"));
+    let expUnsub, incUnsub, budUnsub;
 
-    const expUnsub = onSnapshot(expensesQuery, (snapshot) => {
-      set({
-        expenses: snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })),
-      });
-    });
-
-    const incomeQuery = yearMonth
-      ? query(
-          collection(db, "users", uid, "income"),
-          where("createdAt", ">=", startOfMonth),
-          where("createdAt", "<=", endOfMonth),
-          orderBy("createdAt", "asc")
-        )
-      : query(collection(db, "users", uid, "income"), orderBy("createdAt", "asc"));
-
-    const incUnsub = onSnapshot(incomeQuery, (snapshot) => {
-      set({
-        income: snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })),
-      });
-    });
-
-    let budUnsub = null;
     if (yearMonth) {
+      const [year, month] = yearMonth.split("-");
+      const startOfMonth = Timestamp.fromDate(new Date(year, month - 1, 1));
+      const endOfMonth = Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59, 999));
+
+      // Expenses: filter by user-selected `date`
+      const expensesQuery = query(
+        collection(db, "users", uid, "expenses"),
+        where("date", ">=", startOfMonth),
+        where("date", "<=", endOfMonth),
+        orderBy("date", "asc")
+      );
+
+      expUnsub = onSnapshot(expensesQuery, (snapshot) => {
+        set({
+          expenses: snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: data.date?.toDate(), // convert Timestamp → JS Date
+            };
+          }),
+        });
+      });
+
+      // Income: same logic
+      const incomeQuery = query(
+        collection(db, "users", uid, "income"),
+        where("date", ">=", startOfMonth),
+        where("date", "<=", endOfMonth),
+        orderBy("date", "asc")
+      );
+
+      incUnsub = onSnapshot(incomeQuery, (snapshot) => {
+        set({
+          income: snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: data.date?.toDate(),
+            };
+          }),
+        });
+      });
+
+      // Budget for this month
       budUnsub = onSnapshot(doc(db, "users", uid, "budgets", yearMonth), (snap) => {
         if (snap.exists()) {
+          const data = snap.data();
           set((state) => ({
             budgets: {
               ...state.budgets,
-              [yearMonth]: snap.data(),
+              [yearMonth]: {
+                ...data,
+                startDate: data.startDate?.toDate(),
+              },
             },
           }));
         } else {
           set((state) => ({
             budgets: {
               ...state.budgets,
-              [yearMonth]: { total: 0, categories: {}, currency: get().settings.defaultCurrency },
+              [yearMonth]: {
+                total: 0,
+                categories: {},
+                currency: get().settings.defaultCurrency,
+              },
             },
           }));
         }
       });
+    } else {
+      // No yearMonth → listen to all expenses/income
+      const expensesQuery = query(collection(db, "users", uid, "expenses"), orderBy("date", "asc"));
+      expUnsub = onSnapshot(expensesQuery, (snapshot) => {
+        set({
+          expenses: snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: data.date?.toDate(),
+            };
+          }),
+        });
+      });
+
+      const incomeQuery = query(collection(db, "users", uid, "income"), orderBy("date", "asc"));
+      incUnsub = onSnapshot(incomeQuery, (snapshot) => {
+        set({
+          income: snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: data.date?.toDate(),
+            };
+          }),
+        });
+      });
     }
 
     return () => {
-      expUnsub();
-      incUnsub();
-      if (budUnsub) budUnsub();
+      expUnsub?.();
+      incUnsub?.();
+      budUnsub?.();
     };
   },
 
-  // ⚙️ Update user settings (e.g., defaultCurrency)
+  // ⚙️ Update user settings
   updateUserSettings: async (uid, settings) => {
     if (!uid) throw new Error("User ID is required");
     try {
       const settingsRef = doc(db, "users", uid, "settings", "preferences");
-      await setDoc(settingsRef, {
-        ...settings,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(
+        settingsRef,
+        {
+          ...settings,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
       set((state) => ({
         settings: {
           ...state.settings,
           ...settings,
         },
       }));
-      // If defaultCurrency is updated, sync budgets, expenses, and income
+
       if (settings.defaultCurrency) {
         await get().updateAllBudgetsCurrency(uid, settings.defaultCurrency);
         await get().updateAllExpensesAndIncomeCurrency(uid, settings.defaultCurrency);
       }
     } catch (err) {
-      console.error("🔥 Error updating user settings:", err);
+      console.error("Error updating user settings:", err);
       throw err;
     }
   },
@@ -425,7 +491,7 @@ const useFinanceStore = create((set, get) => ({
       if (snap.exists()) {
         set({ settings: snap.data() });
       } else {
-        set({ settings: { defaultCurrency: "GHS" } }); // Default settings
+        set({ settings: { defaultCurrency: "GHS" } });
       }
     });
     return unsub;
